@@ -4,26 +4,84 @@
   <meta charset="utf-8" />
   <title>FixMe</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>FixMe ⚙️</h1>
-    <div class="controls">
-      <button id="btn-high">Aplicar High Performance</button>
-      <button id="btn-clear-ram">Limpar RAM (Standby)</button>
-    </div>
+    <header>
+      <h1>FixMe ⚙️ - Windows Game Optimization</h1>
+      <div id="sys-info" class="sys-info"></div>
+    </header>
 
-    <div class="process">
-      <input id="proc-name" placeholder="Nome do processo (exe sem .exe)" />
-      <select id="proc-prio">
-        <option value="High">High</option>
-        <option value="AboveNormal">AboveNormal</option>
-        <option value="Normal">Normal</option>
-      </select>
-      <button id="btn-set-prio">Definir Prioridade</button>
-    </div>
+    <!-- Dashboard de Hardware -->
+    <section class="dashboard">
+      <div class="card">
+        <h3>CPU <span id="cpu-percent">0%</span></h3>
+        <div class="gauge-container">
+          <canvas id="cpu-chart" height="120"></canvas>
+        </div>
+        <div class="details">
+          <p>Núcleos: <span id="cpu-cores">-</span></p>
+          <p class="top-process">Top Processo: <span id="cpu-top">-</span></p>
+        </div>
+      </div>
 
-    <div id="status" class="status">Status: pronto</div>
+      <div class="card">
+        <h3>Memória <span id="mem-percent">0%</span></h3>
+        <div class="gauge-container">
+          <canvas id="mem-chart" height="120"></canvas>
+        </div>
+        <div class="details">
+          <p>Usada: <span id="mem-used">-</span> GB / <span id="mem-total">-</span> GB</p>
+          <p class="top-process">Top Processo: <span id="mem-top">-</span></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>GPU <span id="gpu-percent">0%</span></h3>
+        <div class="gauge-container">
+          <canvas id="gpu-chart" height="120"></canvas>
+        </div>
+        <div class="details">
+          <p>Status: <span id="gpu-status">N/A</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controles de Otimização -->
+    <section class="controls-section">
+      <h2>Otimizações</h2>
+      <div class="controls">
+        <button id="btn-high" class="btn btn-primary">⚡ Aplicar High Performance</button>
+        <button id="btn-clear-ram" class="btn btn-primary">🧹 Limpar RAM</button>
+        <button id="btn-monitoring" class="btn btn-secondary">🔄 Monitorar</button>
+      </div>
+    </section>
+
+    <!-- Gerenciador de Processos -->
+    <section class="process-section">
+      <h2>Gerenciar Prioridade de Processo</h2>
+      <div class="process">
+        <input id="proc-name" placeholder="Nome do processo (ex: game.exe ou game)" />
+        <select id="proc-prio">
+          <option value="High">High</option>
+          <option value="AboveNormal">AboveNormal</option>
+          <option value="Normal">Normal</option>
+        </select>
+        <button id="btn-set-prio" class="btn btn-accent">Definir Prioridade</button>
+      </div>
+    </section>
+
+    <!-- Sugestões de Otimização -->
+    <section class="suggestions-section">
+      <h2>Sugestões de Otimização 💡</h2>
+      <div id="suggestions-container" class="suggestions-container">
+        <p class="loading">Analisando sistema...</p>
+      </div>
+    </section>
+
+    <!-- Status -->
+    <div id="status" class="status">Status: Pronto</div>
   </div>
   <script src="renderer.js"></script>
 </body>

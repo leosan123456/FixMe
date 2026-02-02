@@ -2,6 +2,12 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const isDev = require('electron-is-dev');
 const optim = require('./src/optimizations');
+const HardwareMonitor = require('./src/hardware');
+const SuggestionsEngine = require('./src/suggestions');
+
+const hwMonitor = new HardwareMonitor();
+const suggestionsEngine = new SuggestionsEngine();
+let monitorInterval = null;
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -65,4 +71,46 @@ ipcMain.handle('optim:clear-standby-list', async () => {
   } catch (err) {
     return { success: false, error: String(err) };
   }
+});
+
+// Hardware monitoring
+ipcMain.handle('hw:get-system-info', async () => {
+  try {
+    const info = await hwMonitor.getSystemInfo();
+    return { success: true, data: info };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('hw:get-stats', async () => {
+  try {
+    const stats = await hwMonitor.getHardwareStats();
+    const suggestions = suggestionsEngine.getSuggestions(stats);
+    return { success: true, data: { stats, suggestions } };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('hw:start-monitoring', async (event, intervalMs = 2000) => {
+  if (monitorInterval) clearInterval(monitorInterval);
+  monitorInterval = setInterval(async () => {
+    try {
+      const stats = await hwMonitor.getHardwareStats();
+      const suggestions = suggestionsEngine.getSuggestions(stats);
+      event.sender.send('hw:stats-update', { stats, suggestions });
+    } catch (err) {
+      console.error('Erro no monitoramento:', err);
+    }
+  }, intervalMs);
+  return { success: true, message: 'Monitoramento iniciado' };
+});
+
+ipcMain.handle('hw:stop-monitoring', async () => {
+  if (monitorInterval) {
+    clearInterval(monitorInterval);
+    monitorInterval = null;
+  }
+  return { success: true, message: 'Monitoramento parado' };
 });

@@ -33,7 +33,7 @@ async function setHighPerformance() {
 async function setProcessPriority(processName, priority = 'High') {
   // priority: Idle, BelowNormal, Normal, AboveNormal, High, RealTime
   const psCmd = `Get-Process -Name \"${processName}\" -ErrorAction SilentlyContinue | ForEach-Object { $_.PriorityClass = '${priority}' }`;
-  const cmd = `powershell -Command "${psCmd}"`;
+  const cmd = `powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "${psCmd}"`;
   await execElevated(cmd);
   return { process: processName, priority };
 }
@@ -53,7 +53,7 @@ async function clearStandbyList() {
         }
       } else {
         // Fallback: iterate processes and call MinWorkingSet
-        const fallback = "powershell -Command \"Get-Process | Where-Object { $_.ProcessName -notin \"System\",\"Idle\" } | ForEach-Object { try { $_.MinWorkingSet = $_.MinWorkingSet; $_.MaxWorkingSet = $_.MaxWorkingSet } catch {} }\"";
+        const fallback = "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Get-Process | Where-Object { $_.ProcessName -notin \"System\",\"Idle\" } | ForEach-Object { try { $_.MinWorkingSet = $_.MinWorkingSet; $_.MaxWorkingSet = $_.MaxWorkingSet } catch {} }\"";
         try {
           await execElevated(fallback);
           resolve({ used: 'fallback-working-set-trim' });
