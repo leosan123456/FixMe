@@ -1,0 +1,23 @@
+{
+  "name": "fixme",
+  "version": "0.1.0",
+  "description": "FixMe - Windows optimization tool for games",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": ["windows","optimization","games","fixme"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "sudo-prompt": "^9.2.1",
+    "electron-is-dev": "^2.0.0"
+  },
+  "devDependencies": {
+    "electron": "^26.0.0",
+    "electron-builder": "^23.6.0"
+  }
+}

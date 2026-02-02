@@ -1,0 +1,7 @@
+body { font-family: sans-serif; background: #0f1724; color: #e6eef8; }
+.container { max-width: 760px; margin: 40px auto; padding: 20px; background: #0b1220; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.6); }
+h1 { margin: 0 0 16px 0; }
+.controls button, .process button { margin-right: 8px; padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; background: #2563eb; color: white; }
+.process { margin-top: 12px; }
+#proc-name { padding: 8px; border-radius: 6px; border: none; margin-right: 6px; }
+.status { margin-top: 16px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; }
