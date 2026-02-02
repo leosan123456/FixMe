@@ -21,6 +21,31 @@
       </div>
     </section>
 
+    <!-- Aba de Diagnósticos -->
+    <section class="diagnostics-section">
+      <h2>🔍 Diagnóstico do Sistema</h2>
+      <button id="btn-run-diag" class="btn btn-primary">Executar Diagnóstico</button>
+      
+      <!-- Loading Bar -->
+      <div id="diag-loading" class="diag-loading" style="display:none;">
+        <div class="diag-progress-container">
+          <div class="diag-progress-text">
+            <span id="diag-step">Iniciando diagnóstico...</span>
+            <span id="diag-percent">0%</span>
+          </div>
+          <div class="diag-progress-bar">
+            <div id="diag-progress-fill" class="diag-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados dos Diagnósticos -->
+      <div id="diag-results" class="diag-results" style="display:none;">
+        <div id="diag-summary" class="diag-summary"></div>
+        <div id="diag-issues" class="diag-issues"></div>
+      </div>
+    </section>
+
     <!-- Dashboard de Hardware -->
     <section class="dashboard">
       <div class="card">

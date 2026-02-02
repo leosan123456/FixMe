@@ -118,6 +118,168 @@ header h1 {
   text-transform: uppercase;
 }
 
+/* Diagnostics Section */
+.diagnostics-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.diagnostics-section h2 {
+  margin-bottom: 15px;
+  font-size: 1.3em;
+}
+
+.diag-loading {
+  margin: 20px 0;
+}
+
+.diag-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diag-progress-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+  color: #a0a8b8;
+}
+
+.diag-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.diag-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.diag-results {
+  margin-top: 20px;
+}
+
+.diag-summary {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid #3b82f6;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.diag-summary h3 {
+  margin-bottom: 10px;
+  color: #3b82f6;
+}
+
+.diag-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  font-size: 0.9em;
+}
+
+.diag-stat {
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.diag-stat-label {
+  color: #7c8ca8;
+  font-size: 0.85em;
+}
+
+.diag-stat-value {
+  font-weight: bold;
+  color: #e6eef8;
+  font-size: 1.1em;
+}
+
+.diag-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diag-issue {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 4px solid;
+  border-radius: 6px;
+  padding: 12px;
+  animation: slideIn 0.3s ease;
+}
+
+.diag-issue.critical {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.diag-issue.high {
+  border-left-color: #f97316;
+  background: rgba(249, 115, 22, 0.1);
+}
+
+.diag-issue.medium {
+  border-left-color: #eab308;
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.diag-issue.low {
+  border-left-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.diag-issue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.diag-issue-title {
+  font-weight: 600;
+  color: #e6eef8;
+}
+
+.diag-issue-severity {
+  font-size: 0.75em;
+  padding: 4px 8px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  text-transform: uppercase;
+}
+
+.diag-issue-category {
+  font-size: 0.85em;
+  color: #a0a8b8;
+  margin-bottom: 5px;
+}
+
+.diag-issue-description {
+  font-size: 0.9em;
+  color: #8a92a5;
+  margin-bottom: 8px;
+}
+
+.diag-issue-solution {
+  font-size: 0.85em;
+  color: #7c8ca8;
+  font-style: italic;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Dashboard */
 .dashboard {
   display: grid;

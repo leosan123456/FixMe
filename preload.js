@@ -24,6 +24,10 @@ contextBridge.exposeInMainWorld('fixme', {
   getRecentApps: () => ipcRenderer.invoke('apps:get-recent'),
   getGames: () => ipcRenderer.invoke('apps:get-games'),
   
+  // Diagnostics
+  runDiagnostics: () => ipcRenderer.invoke('diag:run-diagnostics'),
+  onDiagProgress: (callback) => ipcRenderer.on('diag:progress', (_, data) => callback(data)),
+  
   // Event listeners
   onStatsUpdate: (callback) => ipcRenderer.on('hw:stats-update', (_, data) => callback(data))
 });

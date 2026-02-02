@@ -355,3 +355,80 @@ function getAppEmoji(type) {
   };
   return emojis[type] || '📦';
 }
+
+// ===== DIAGNÓSTICOS =====
+document.getElementById('btn-run-diag').addEventListener('click', async () => {
+  document.getElementById('diag-loading').style.display = 'block';
+  document.getElementById('diag-results').style.display = 'none';
+  setStatus('Executando diagnóstico do sistema...');
+
+  // Listener de progresso
+  window.fixme.onDiagProgress((progress) => {
+    const percentage = Math.round(progress.progress);
+    document.getElementById('diag-step').textContent = progress.step;
+    document.getElementById('diag-percent').textContent = `${percentage}%`;
+    document.getElementById('diag-progress-fill').style.width = `${percentage}%`;
+  });
+
+  const res = await window.fixme.runDiagnostics();
+  
+  if (res.success) {
+    displayDiagResults(res.data, res.aiAnalysis);
+    setStatus(`Diagnóstico completo: ${res.data.totalIssues} problema(s) detectado(s) ✅`);
+  } else {
+    setStatus(`Erro no diagnóstico: ${res.error}`, false);
+  }
+
+  document.getElementById('diag-loading').style.display = 'none';
+});
+
+function displayDiagResults(result, aiAnalysis) {
+  const resultsDiv = document.getElementById('diag-results');
+  const summaryDiv = document.getElementById('diag-summary');
+  const issuesDiv = document.getElementById('diag-issues');
+
+  // Summary
+  const severityEmojis = {
+    critical: '🚨',
+    high: '🔴',
+    medium: '🟠',
+    low: '🟢'
+  };
+
+  summaryDiv.innerHTML = `
+    <h3>${severityEmojis[result.severity]} Resumo do Diagnóstico</h3>
+    <div class="diag-summary-stats">
+      <div class="diag-stat">
+        <div class="diag-stat-label">Total de Problemas</div>
+        <div class="diag-stat-value">${result.totalIssues}</div>
+      </div>
+      <div class="diag-stat">
+        <div class="diag-stat-label">Severidade</div>
+        <div class="diag-stat-value">${result.severity.toUpperCase()}</div>
+      </div>
+      <div class="diag-stat">
+        <div class="diag-stat-label">Status</div>
+        <div class="diag-stat-value">${result.totalIssues === 0 ? '✅ OK' : '⚠️ Ação Necessária'}</div>
+      </div>
+    </div>
+  `;
+
+  // Issues
+  if (result.issues.length === 0) {
+    issuesDiv.innerHTML = '<p class="loading">Sistema está em bom estado! ✅</p>';
+  } else {
+    issuesDiv.innerHTML = result.issues.map((issue, idx) => `
+      <div class="diag-issue ${issue.severity}">
+        <div class="diag-issue-header">
+          <span class="diag-issue-title">${idx + 1}. ${issue.title}</span>
+          <span class="diag-issue-severity">${issue.severity}</span>
+        </div>
+        <div class="diag-issue-category">📂 ${issue.category}</div>
+        <div class="diag-issue-description">${issue.description}</div>
+        <div class="diag-issue-solution">💡 ${issue.solution}</div>
+      </div>
+    `).join('');
+  }
+
+  resultsDiv.style.display = 'block';
+}
