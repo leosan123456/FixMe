@@ -201,6 +201,115 @@ document.getElementById('btn-monitoring').addEventListener('click', async () => 
   }
 });
 
+// Botões de IA
+document.getElementById('btn-ai-recommend').addEventListener('click', async () => {
+  setStatus('Obtendo recomendações de IA...');
+  const res = await window.fixme.getSmartRecommendations();
+  if (res.success) {
+    displayAIRecommendations(res.data);
+    setStatus('Recomendações de IA carregadas ✅');
+  } else {
+    setStatus(`Erro na IA: ${res.error}`, false);
+  }
+});
+
+document.getElementById('btn-game-optim').addEventListener('click', async () => {
+  const gameName = prompt('Qual é o nome do jogo?');
+  if (!gameName) return;
+  
+  setStatus(`Otimizando para ${gameName}...`);
+  const res = await window.fixme.suggestGameOptimization(gameName);
+  if (res.success) {
+    displayGameOptimizationSuggestions(res.data);
+    setStatus(`Otimizações para ${gameName} carregadas ✅`);
+  } else {
+    setStatus(`Erro ao otimizar para jogo: ${res.error}`, false);
+  }
+});
+
+function displayAIRecommendations(data) {
+  const container = document.getElementById('ai-recommendations');
+  
+  if (!data.recommendations || data.recommendations.length === 0) {
+    container.innerHTML = `<p class="loading">${data.overallAssessment || 'Sistema já está otimizado! ✅'}</p>`;
+    return;
+  }
+
+  container.innerHTML = data.recommendations.map((rec, idx) => `
+    <div class="ai-recommendation ${rec.priority}">
+      <div class="ai-rec-header">
+        <span class="ai-rec-type">${idx + 1}. ${rec.type}</span>
+        <span class="ai-rec-priority">${rec.priority}</span>
+      </div>
+      <div class="ai-rec-desc">${rec.description}</div>
+      <div class="ai-rec-improvement">📈 Melhoria esperada: ${rec.expectedImprovement || 'N/A'}</div>
+      <div class="ai-rec-actions">
+        <button class="ai-rec-btn" onclick="applyAIRecommendation('${rec.type}', '${rec.command || ''}')">Aplicar</button>
+        <button class="ai-rec-btn" onclick="feedbackAIRecommendation('${rec.type}')">Feedback</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function displayGameOptimizationSuggestions(data) {
+  const container = document.getElementById('ai-recommendations');
+  
+  if (typeof data === 'string') {
+    container.innerHTML = `<p class="loading">${data}</p>`;
+  } else {
+    container.innerHTML = `
+      <div class="ai-recommendation">
+        <div class="ai-rec-header">
+          <span class="ai-rec-type">🎮 Sugestões de Otimização para Jogo</span>
+        </div>
+        <pre class="ai-rec-desc" style="white-space: pre-wrap; word-break: break-word;">${JSON.stringify(data, null, 2)}</pre>
+      </div>
+    `;
+  }
+}
+
+async function applyAIRecommendation(type, command) {
+  setStatus(`Aplicando: ${type}...`);
+  
+  const stats = await window.fixme.getHardwareStats();
+  if (stats.success) {
+    await window.fixme.recordOptimizationSuccess(
+      type,
+      parseFloat(stats.data.stats.cpu.current),
+      parseFloat(stats.data.stats.memory.current),
+      parseFloat(stats.data.stats.gpu.current),
+      `Aplicado automaticamente pela IA`
+    );
+    setStatus(`${type} aplicado ✅`);
+    loadAnalytics();
+  } else {
+    setStatus('Erro ao aplicar recomendação', false);
+  }
+}
+
+function feedbackAIRecommendation(type) {
+  const rating = prompt(`Como você avalia a otimização "${type}"? (1-5):`);
+  if (rating && (rating >= 1 && rating <= 5)) {
+    const comment = prompt('Algum comentário? (opcional)');
+    window.fixme.learnFromFeedback(1, parseInt(rating), comment || '').then(res => {
+      if (res.success) {
+        setStatus('Feedback registrado! A IA está aprendendo 🧠');
+      }
+    });
+  }
+}
+
+async function loadAnalytics() {
+  const res = await window.fixme.getAnalytics();
+  if (res.success && res.data) {
+    document.getElementById('total-optim').textContent = res.data.totalOptimizations || '0';
+    document.getElementById('success-rate').textContent = `${res.data.successRate || '0'}%`;
+    document.getElementById('last-optim').textContent = res.data.lastHardwareProfile 
+      ? new Date(res.data.lastHardwareProfile.timestamp).toLocaleString('pt-BR')
+      : 'Nunca';
+  }
+}
+
 // Listener para atualizações de monitoramento
 window.fixme.onStatsUpdate((data) => {
   updateCharts(data.stats);
@@ -209,3 +318,4 @@ window.fixme.onStatsUpdate((data) => {
 
 // Inicializar tudo
 initCharts();
+loadAnalytics();

@@ -4,10 +4,16 @@ const isDev = require('electron-is-dev');
 const optim = require('./src/optimizations');
 const HardwareMonitor = require('./src/hardware');
 const SuggestionsEngine = require('./src/suggestions');
+const db = require('./src/database');
+const AIOptimizer = require('./src/ai-optimizer');
 
 const hwMonitor = new HardwareMonitor();
 const suggestionsEngine = new SuggestionsEngine();
+const aiOptimizer = new AIOptimizer();
 let monitorInterval = null;
+
+// Inicializar banco de dados na startup
+db.initDatabase();
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -114,3 +120,101 @@ ipcMain.handle('hw:stop-monitoring', async () => {
   }
   return { success: true, message: 'Monitoramento parado' };
 });
+
+// AI Optimizer handlers
+ipcMain.handle('ai:get-smart-recommendations', async () => {
+  try {
+    const stats = await hwMonitor.getHardwareStats();
+    const sysInfo = await hwMonitor.getSystemInfo();
+    const history = db.getOptimizationHistory(10);
+    
+    // Registrar perfil de hardware na primeira execução
+    const existingProfile = db.getHardwareProfile();
+    if (!existingProfile) {
+      db.recordHardwareProfile(
+        sysInfo.cpuModel,
+        sysInfo.cpuCores,
+        parseFloat(sysInfo.totalMemory),
+        'GPU',
+        'Windows'
+      );
+    }
+
+    const hwProfile = {
+      cpuModel: sysInfo.cpuModel,
+      cpuCores: sysInfo.cpuCores,
+      totalMemory: parseFloat(sysInfo.totalMemory),
+      gpuModel: 'GPU',
+      os: 'Windows'
+    };
+
+    const aiRecommendations = await aiOptimizer.getSmartRecommendations(stats, hwProfile, history);
+    
+    // Registrar recomendações no banco
+    if (aiRecommendations.recommendations) {
+      aiRecommendations.recommendations.forEach(rec => {
+        db.recordAIRecommendation(hwProfile, JSON.stringify(rec), mapPriorityToNumber(rec.priority));
+      });
+    }
+
+    return { success: true, data: aiRecommendations };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('ai:learn-from-feedback', async (_, optimizationId, rating, comment) => {
+  try {
+    await aiOptimizer.learnFromFeedback(optimizationId, rating, comment);
+    return { success: true, message: 'Feedback registrado e aprendizado aplicado' };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('ai:suggest-game-optimization', async (_, gameName) => {
+  try {
+    const sysInfo = await hwMonitor.getSystemInfo();
+    const hwProfile = {
+      cpuModel: sysInfo.cpuModel,
+      cpuCores: sysInfo.cpuCores,
+      totalMemory: parseFloat(sysInfo.totalMemory),
+      gpuModel: 'GPU',
+      os: 'Windows'
+    };
+
+    const gameOptimization = await aiOptimizer.suggestGameOptimization(gameName, hwProfile);
+    return { success: true, data: gameOptimization };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('ai:get-analytics', async () => {
+  try {
+    const analytics = db.getAnalytics();
+    return { success: true, data: analytics };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('optim:record-success', async (_, type, cpuUsage, memUsage, gpuUsage, notes) => {
+  try {
+    const sysInfo = await hwMonitor.getSystemInfo();
+    db.recordOptimization(type, sysInfo, cpuUsage, memUsage, gpuUsage, true, notes);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+function mapPriorityToNumber(priority) {
+  const priorityMap = {
+    'crítico': 4,
+    'alto': 3,
+    'médio': 2,
+    'baixo': 1
+  };
+  return priorityMap[priority] || 1;
+}
