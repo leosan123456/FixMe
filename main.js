@@ -6,10 +6,12 @@ const HardwareMonitor = require('./src/hardware');
 const SuggestionsEngine = require('./src/suggestions');
 const db = require('./src/database');
 const AIOptimizer = require('./src/ai-optimizer');
+const AppsCollector = require('./src/apps-collector');
 
 const hwMonitor = new HardwareMonitor();
 const suggestionsEngine = new SuggestionsEngine();
 const aiOptimizer = new AIOptimizer();
+const appsCollector = new AppsCollector();
 let monitorInterval = null;
 
 // Inicializar banco de dados na startup
@@ -217,4 +219,33 @@ function mapPriorityToNumber(priority) {
     'baixo': 1
   };
   return priorityMap[priority] || 1;
+}
+
+// Apps Collector handlers
+ipcMain.handle('apps:get-gallery', async () => {
+  try {
+    const apps = await appsCollector.collectAll();
+    return { success: true, data: apps };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('apps:get-recent', async () => {
+  try {
+    const apps = await appsCollector.getRecentApps();
+    return { success: true, data: apps };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('apps:get-games', async () => {
+  try {
+    const games = await appsCollector.discoverGames();
+    return { success: true, data: games };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
 }

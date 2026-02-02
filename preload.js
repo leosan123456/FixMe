@@ -19,6 +19,11 @@ contextBridge.exposeInMainWorld('fixme', {
   getAnalytics: () => ipcRenderer.invoke('ai:get-analytics'),
   recordOptimizationSuccess: (type, cpu, mem, gpu, notes) => ipcRenderer.invoke('optim:record-success', type, cpu, mem, gpu, notes),
   
+  // Apps Gallery
+  getAppsGallery: () => ipcRenderer.invoke('apps:get-gallery'),
+  getRecentApps: () => ipcRenderer.invoke('apps:get-recent'),
+  getGames: () => ipcRenderer.invoke('apps:get-games'),
+  
   // Event listeners
   onStatsUpdate: (callback) => ipcRenderer.on('hw:stats-update', (_, data) => callback(data))
 });

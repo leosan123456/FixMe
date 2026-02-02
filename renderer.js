@@ -319,3 +319,39 @@ window.fixme.onStatsUpdate((data) => {
 // Inicializar tudo
 initCharts();
 loadAnalytics();
+
+// Carregar galeria de apps
+(async function loadAppsGallery() {
+  const res = await window.fixme.getAppsGallery();
+  if (res.success && res.data) {
+    displayAppsGallery(res.data);
+  }
+})();
+
+function displayAppsGallery(apps) {
+  const container = document.getElementById('apps-gallery');
+  
+  if (!apps || apps.length === 0) {
+    container.innerHTML = '<p class="loading">Nenhum aplicativo encontrado</p>';
+    return;
+  }
+
+  container.innerHTML = apps.map(app => `
+    <div class="app-item" title="${app.name}">
+      <div class="app-icon">
+        ${app.icon && app.icon.startsWith('<svg') ? app.icon : `<span>${getAppEmoji(app.type)}</span>`}
+      </div>
+      <div class="app-name">${app.name}</div>
+      <div class="app-type">${app.type}</div>
+    </div>
+  `).join('');
+}
+
+function getAppEmoji(type) {
+  const emojis = {
+    game: '🎮',
+    app: '📱',
+    system: '⚙️'
+  };
+  return emojis[type] || '📦';
+}

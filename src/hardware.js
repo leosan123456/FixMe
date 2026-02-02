@@ -45,11 +45,10 @@ class HardwareMonitor {
 
   async getHardwareStats() {
     try {
-      const [cpuLoad, memory, gpu, diskIO, processes] = await Promise.all([
+      const [cpuLoad, memory, gpu, processes] = await Promise.all([
         si.currentLoad(),
         si.mem(),
         si.graphics().catch(() => ({ controllers: [] })),
-        si.diskIO().catch(() => []),
         si.processes()
       ]);
 
