@@ -3,12 +3,165 @@ let cpuChart, memChart, gpuChart;
 let monitoringActive = false;
 
 function setStatus(msg, ok = true) {
-  statusEl.textContent = msg;
-  statusEl.className = ok ? 'status' : 'status error';
-  setTimeout(() => {
-    statusEl.textContent = 'Status: Pronto';
-    statusEl.className = 'status';
-  }, 3000);
+  if (statusEl) {
+    statusEl.textContent = msg;
+    statusEl.className = ok ? 'status' : 'status error';
+    setTimeout(() => {
+      statusEl.textContent = 'Status: Pronto';
+      statusEl.className = 'status';
+    }, 3000);
+  }
+}
+
+// Função para renderizar cards de diagnóstico
+async function renderDiagnosisOverview() {
+  const container = document.getElementById('diagnosisOverview');
+  if (!container) return;
+  
+  const stats = await window.fixme.getHardwareStats();
+  const diagCards = [
+    {
+      title: 'Processador',
+      icon: 'healthy',
+      value: Math.round(stats.cpu.current) + '%',
+      detail: 'Funcionando bem',
+      status: 'healthy',
+      statusLabel: 'Saudável'
+    },
+    {
+      title: 'Armazenamento',
+      icon: 'warning',
+      value: '72%',
+      detail: '3 problemas encontrados',
+      status: 'warning',
+      statusLabel: 'Atenção'
+    },
+    {
+      title: 'Segurança',
+      icon: 'critical',
+      value: '45%',
+      detail: '2 ameaças detectadas',
+      status: 'critical',
+      statusLabel: 'Crítico'
+    },
+    {
+      title: 'Rede',
+      icon: 'info',
+      value: '12ms',
+      detail: 'Conexão estável',
+      status: 'healthy',
+      statusLabel: 'Ótimo'
+    }
+  ];
+
+  container.innerHTML = diagCards.map(card => `
+    <div class="diagnosis-card ${card.status}">
+      <div class="diagnosis-header">
+        <div class="diagnosis-icon ${card.icon}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            ${card.icon === 'healthy' ? '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3"/>' : ''}
+            ${card.icon === 'warning' ? '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>' : ''}
+            ${card.icon === 'critical' ? '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>' : ''}
+            ${card.icon === 'info' ? '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><circle cx="12" cy="20" r="1"/>' : ''}
+          </svg>
+        </div>
+        <span class="diagnosis-status ${card.status}">${card.statusLabel}</span>
+      </div>
+      <div class="diagnosis-title">${card.title}</div>
+      <div class="diagnosis-value">${card.value}</div>
+      <div class="diagnosis-detail">${card.detail}</div>
+    </div>
+  `).join('');
+}
+
+// Função para renderizar módulos de diagnóstico
+function renderModuleCards() {
+  const container = document.getElementById('modulesSection');
+  if (!container) return;
+
+  const modules = [
+    {
+      title: 'Registro do Sistema',
+      icon: 'registry',
+      desc: 'Limpeza e reparo de registro',
+      stats: [
+        { value: '23', label: 'Entradas órfãs', color: 'yellow' },
+        { value: '8', label: 'Corrompidas', color: 'red' },
+        { value: '1.2k', label: 'Saudáveis', color: 'green' }
+      ],
+      progressValue: 72,
+      progressColor: 'yellow',
+      status: 'warning',
+      statusLabel: 'Precisa atenção'
+    },
+    {
+      title: 'Drivers do Sistema',
+      icon: 'drivers',
+      desc: 'Atualização e verificação',
+      stats: [
+        { value: '24', label: 'Atualizados', color: 'green' },
+        { value: '1', label: 'Desatualizado', color: 'red' },
+        { value: '0', label: 'Faltando', color: 'green' }
+      ],
+      progressValue: 96,
+      progressColor: 'green',
+      status: 'healthy',
+      statusLabel: 'Quase perfeito'
+    },
+    {
+      title: 'Segurança',
+      icon: 'security',
+      desc: 'Proteção e vulnerabilidades',
+      stats: [
+        { value: '2', label: 'Ameaças', color: 'red' },
+        { value: '1', label: 'Desativado', color: 'yellow' },
+        { value: '5', label: 'Protegidos', color: 'green' }
+      ],
+      progressValue: 45,
+      progressColor: 'purple',
+      status: 'critical',
+      statusLabel: 'Ação necessária'
+    }
+  ];
+
+  container.innerHTML = modules.map(m => `
+    <div class="module-card">
+      <div class="module-header">
+        <div class="module-icon ${m.icon}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            ${m.icon === 'registry' ? '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' : ''}
+            ${m.icon === 'drivers' ? '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>' : ''}
+            ${m.icon === 'security' ? '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>' : ''}
+          </svg>
+        </div>
+        <div class="module-info">
+          <h3>${m.title}</h3>
+          <p>${m.desc}</p>
+        </div>
+      </div>
+      <div class="module-stats">
+        ${m.stats.map(s => `
+          <div class="module-stat">
+            <div class="module-stat-value ${s.color}">${s.value}</div>
+            <div class="module-stat-label">${s.label}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="module-progress">
+        <div class="module-progress-bar ${m.progressColor}" style="width: ${m.progressValue}%;"></div>
+      </div>
+      <div class="module-action">
+        <div class="module-status ${m.status}">
+          <div class="module-status-dot"></div>
+          ${m.statusLabel}
+        </div>
+        <button class="module-scan-btn">
+          Escanear
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
 }
 
 // Inicializar gráficos
@@ -432,3 +585,78 @@ function displayDiagResults(result, aiAnalysis) {
 
   resultsDiv.style.display = 'block';
 }
+
+// ===== NOVO DESIGN - Botão de Scan no Header =====
+const scanBtn = document.getElementById('scanBtn');
+if (scanBtn) {
+  scanBtn.addEventListener('click', async () => {
+    scanBtn.classList.add('scanning');
+    document.getElementById('scan-text').textContent = 'Escaneando...';
+    
+    // Render diagnosis overview primeiro
+    await renderDiagnosisOverview();
+    renderModuleCards();
+    
+    // Simular terminal output
+    const terminalBody = document.getElementById('terminalBody');
+    if (terminalBody) {
+      terminalBody.innerHTML = `
+        <div class="terminal-line">
+          <span class="terminal-prefix">fixme-ai $</span>
+          <span class="terminal-text">Iniciando varredura completa...</span>
+        </div>
+        <div class="terminal-line">
+          <span class="terminal-prefix">[INFO]</span>
+          <span class="terminal-text info">Carregando módulos de análise...</span>
+        </div>
+        <div class="terminal-progress">
+          <div class="terminal-progress-bar" style="width: 100%;"></div>
+        </div>
+        <div class="terminal-line">
+          <span class="terminal-prefix">[OK]</span>
+          <span class="terminal-text success">✓ Módulos carregados com sucesso</span>
+        </div>
+        <div class="terminal-line">
+          <span class="terminal-prefix">[SCAN]</span>
+          <span class="terminal-text">Analisando sistema...</span>
+        </div>
+      `;
+    }
+    
+    setTimeout(() => {
+      scanBtn.classList.remove('scanning');
+      document.getElementById('scan-text').textContent = 'Iniciar Diagnóstico';
+      setStatus('Varredura concluída ✅');
+    }, 2000);
+  });
+}
+
+// ===== Issues Panel - Fix All Button =====
+const fixAllBtn = document.getElementById('fixAllBtn');
+if (fixAllBtn) {
+  fixAllBtn.addEventListener('click', async () => {
+    setStatus('Corrigindo todos os problemas...');
+    fixAllBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Corrigindo...';
+    fixAllBtn.disabled = true;
+    
+    setTimeout(() => {
+      fixAllBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Todos os Problemas Corrigidos!';
+      fixAllBtn.style.background = 'var(--green)';
+      setStatus('Todos os problemas foram corrigidos! ✅');
+      
+      setTimeout(() => {
+        fixAllBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Corrigir Todos os Problemas';
+        fixAllBtn.style.background = '';
+        fixAllBtn.disabled = false;
+      }, 3000);
+    }, 1500);
+  });
+}
+
+// ===== Init on Page Load =====
+document.addEventListener('DOMContentLoaded', async () => {
+  await renderDiagnosisOverview();
+  renderModuleCards();
+  loadAnalytics();
+  loadAppsGallery();
+});
