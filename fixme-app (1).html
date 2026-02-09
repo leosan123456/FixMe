@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Me</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #020917;
+            --bg-secondary: #051638;
+            --bg-card: rgba(5, 22, 56, 0.6);
+            --bg-hover: rgba(10, 44, 113, 0.4);
+            --accent-orange: #f56f10;
+            --accent-blue: #1458e1;
+            --light-blue: #a3c0f5;
+            --cream: #eeeade;
+            --white: #ffffff;
+            --text-primary: #ffffff;
+            --text-secondary: #a3b3c9;
+            --text-muted: #6b7a90;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--cream);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .logo-text span {
+            font-weight: 300;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .icon-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Main Layout */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Content Area */
+        .content {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-indicator {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .status-indicator::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--success);
+            animation: pulse-ring 2s ease-out infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .status-indicator svg {
+            width: 24px;
+            height: 24px;
+            color: var(--success);
+        }
+
+        .status-info {
+            flex: 1;
+        }
+
+        .status-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .status-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .scan-btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            border: none;
+            border-radius: 12px;
+            color: var(--white);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .scan-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(245, 111, 16, 0.3);
+        }
+
+        .scan-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Section Title */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .section-link {
+            font-size: 0.8rem;
+            color: var(--accent-orange);
+            text-decoration: none;
+        }
+
+        /* Hardware Info */
+        .hardware-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .hardware-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .hardware-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .hardware-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(20, 88, 225, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+            color: var(--accent-blue);
+        }
+
+        .hardware-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .hardware-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .hardware-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .hardware-usage {
+            margin-top: 0.5rem;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .hardware-usage-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .hardware-usage-bar.low { background: var(--success); }
+        .hardware-usage-bar.medium { background: var(--warning); }
+        .hardware-usage-bar.high { background: #ef4444; }
+
+        /* Apps Grid */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .app-card:hover {
+            background: var(--bg-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            margin: 0 auto 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .app-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .app-time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Activity List */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .activity-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .activity-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .activity-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* AI Panel (Right Sidebar) */
+        .ai-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 65px);
+            position: sticky;
+            top: 65px;
+        }
+
+        .ai-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ai-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .ai-title svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent-orange);
+        }
+
+        .ai-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .ai-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem;
+        }
+
+        /* AI Analysis States */
+        .ai-idle {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .ai-idle-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .ai-idle-icon svg {
+            width: 28px;
+            height: 28px;
+            color: var(--text-muted);
+        }
+
+        .ai-idle-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* AI Loading */
+        .ai-loading {
+            display: none;
+        }
+
+        .ai-loading.active {
+            display: block;
+        }
+
+        .ai-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ai-step:last-child {
+            border-bottom: none;
+        }
+
+        .ai-step-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            color: var(--text-muted);
+        }
+
+        .ai-step-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .ai-step.active .ai-step-icon {
+            background: rgba(245, 111, 16, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .ai-step.completed .ai-step-icon {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .ai-step-content {
+            flex: 1;
+            padding-top: 0.2rem;
+        }
+
+        .ai-step-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.15rem;
+        }
+
+        .ai-step.pending .ai-step-title {
+            color: var(--text-muted);
+        }
+
+        .ai-step-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .ai-step-loader {
+            display: none;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .ai-step.active .ai-step-loader {
+            display: block;
+        }
+
+        .ai-step-loader-bar {
+            height: 100%;
+            background: var(--accent-orange);
+            border-radius: 2px;
+            width: 0%;
+            animation: loading 2s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; margin-left: 0; }
+            50% { width: 60%; margin-left: 20%; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+
+        /* AI Results */
+        .ai-results {
+            display: none;
+        }
+
+        .ai-results.active {
+            display: block;
+        }
+
+        .ai-result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .ai-result-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-result-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-result-icon.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .ai-result-icon.info {
+            background: rgba(20, 88, 225, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .ai-result-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .ai-result-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .ai-result-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* AI Footer */
+        .ai-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .ai-action-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            border: none;
+            border-radius: 12px;
+            color: var(--white);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .ai-action-btn:hover {
+            box-shadow: 0 8px 24px rgba(245, 111, 16, 0.3);
+        }
+
+        .ai-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ai-action-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            .ai-panel {
+                position: fixed;
+                right: -320px;
+                top: 65px;
+                width: 320px;
+                height: calc(100vh - 65px);
+                transition: right 0.3s ease;
+                z-index: 200;
+            }
+
+            .ai-panel.open {
+                right: 0;
+            }
+
+            .ai-overlay {
+                display: none;
+                position: fixed;
+                top: 65px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 150;
+            }
+
+            .ai-overlay.active {
+                display: block;
+            }
+
+            .hardware-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .apps-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .status-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .scan-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .apps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 32 32" fill="none">
+                    <path d="M20 4L8 18h8l-4 10 12-14h-8l4-10z" fill="#f56f10"/>
+                </svg>
+            </div>
+            <span class="logo-text">Fix<span>Me</span></span>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="toggleAiPanel()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                    <circle cx="8" cy="14" r="1"/><circle cx="16" cy="14" r="1"/>
+                </svg>
+            </button>
+            <button class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+            </button>
+            <div class="user-avatar">LS</div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main">
+        <!-- Content Area -->
+        <main class="content">
+            <!-- Status Banner -->
+            <div class="status-banner">
+                <div class="status-indicator">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22,4 12,14.01 9,11.01"/>
+                    </svg>
+                </div>
+                <div class="status-info">
+                    <div class="status-title">Sistema saudável</div>
+                    <div class="status-subtitle">Última verificação há 5 minutos</div>
+                </div>
+                <button class="scan-btn" onclick="startAnalysis()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    Analisar
+                </button>
+            </div>
+
+            <!-- Hardware Section -->
+            <div class="section-header">
+                <span class="section-title">Hardware</span>
+            </div>
+            <div class="hardware-grid">
+                <div class="hardware-card">
+                    <div class="hardware-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                            <rect x="9" y="9" width="6" height="6"/>
+                            <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>
+                        </svg>
+                    </div>
+                    <div class="hardware-label">CPU</div>
+                    <div class="hardware-value">Intel i7-12700K</div>
+                    <div class="hardware-usage">
+                        <div class="hardware-usage-bar low" style="width: 35%;"></div>
+                    </div>
+                </div>
+                <div class="hardware-card">
+                    <div class="hardware-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="6" width="20" height="12" rx="2"/>
+                            <path d="M6 12h4M14 12h4"/>
+                        </svg>
+                    </div>
+                    <div class="hardware-label">Memória RAM</div>
+                    <div class="hardware-value">16GB DDR5</div>
+                    <div class="hardware-usage">
+                        <div class="hardware-usage-bar medium" style="width: 62%;"></div>
+                    </div>
+                </div>
+                <div class="hardware-card">
+                    <div class="hardware-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M3 12h3M18 12h3M12 3v3M12 18v3"/>
+                        </svg>
+                    </div>
+                    <div class="hardware-label">Disco</div>
+                    <div class="hardware-value">512GB NVMe</div>
+                    <div class="hardware-usage">
+                        <div class="hardware-usage-bar medium" style="width: 58%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Apps Section -->
+            <div class="section-header">
+                <span class="section-title">Apps recentes</span>
+                <a href="#" class="section-link">Ver todos</a>
+            </div>
+            <div class="apps-grid">
+                <div class="app-card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #00d4ff, #0066ff);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                    </div>
+                    <div class="app-name">Chrome</div>
+                    <div class="app-time">Agora</div>
+                </div>
+                <div class="app-card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #7b68ee, #9370db);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        </svg>
+                    </div>
+                    <div class="app-name">VS Code</div>
+                    <div class="app-time">2 min</div>
+                </div>
+                <div class="app-card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #00c853, #69f0ae);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <div class="app-name">Spotify</div>
+                    <div class="app-time">15 min</div>
+                </div>
+                <div class="app-card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #ff6b35, #f7931e);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                            <polygon points="12,2 15,8 22,9 17,14 18,21 12,18 6,21 7,14 2,9 9,8"/>
+                        </svg>
+                    </div>
+                    <div class="app-name">Steam</div>
+                    <div class="app-time">1h</div>
+                </div>
+                <div class="app-card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #5865f2, #7289da);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                            <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+                        </svg>
+                    </div>
+                    <div class="app-name">Discord</div>
+                    <div class="app-time">2h</div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="section-header">
+                <span class="section-title">Correções recentes</span>
+            </div>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Cache do Chrome limpo</div>
+                        <div class="activity-time">Há 5 minutos • 1.2GB liberados</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Memória otimizada</div>
+                        <div class="activity-time">Há 2 horas • 2.4GB recuperados</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- AI Panel -->
+        <aside class="ai-panel" id="aiPanel">
+            <div class="ai-header">
+                <div class="ai-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                    </svg>
+                    Análise IA
+                </div>
+                <div class="ai-subtitle">Diagnóstico inteligente</div>
+            </div>
+
+            <div class="ai-content">
+                <!-- Idle State -->
+                <div class="ai-idle" id="aiIdle">
+                    <div class="ai-idle-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <div class="ai-idle-text">
+                        Clique em "Analisar" para iniciar um diagnóstico completo do seu sistema
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="ai-loading" id="aiLoading">
+                    <div class="ai-step pending" data-step="1">
+                        <div class="ai-step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                        </div>
+                        <div class="ai-step-content">
+                            <div class="ai-step-title">Coletando dados</div>
+                            <div class="ai-step-desc">Informações do sistema</div>
+                            <div class="ai-step-loader">
+                                <div class="ai-step-loader-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-step pending" data-step="2">
+                        <div class="ai-step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                            </svg>
+                        </div>
+                        <div class="ai-step-content">
+                            <div class="ai-step-title">Analisando processos</div>
+                            <div class="ai-step-desc">Aplicativos ativos</div>
+                            <div class="ai-step-loader">
+                                <div class="ai-step-loader-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-step pending" data-step="3">
+                        <div class="ai-step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            </svg>
+                        </div>
+                        <div class="ai-step-content">
+                            <div class="ai-step-title">Verificando disco</div>
+                            <div class="ai-step-desc">Espaço e integridade</div>
+                            <div class="ai-step-loader">
+                                <div class="ai-step-loader-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-step pending" data-step="4">
+                        <div class="ai-step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <div class="ai-step-content">
+                            <div class="ai-step-title">Diagnóstico IA</div>
+                            <div class="ai-step-desc">Gerando recomendações</div>
+                            <div class="ai-step-loader">
+                                <div class="ai-step-loader-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results State -->
+                <div class="ai-results" id="aiResults">
+                    <div class="ai-result-card">
+                        <div class="ai-result-header">
+                            <div class="ai-result-icon success">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20,6 9,17 4,12"/>
+                                </svg>
+                            </div>
+                            <div class="ai-result-title">Cache otimizado</div>
+                        </div>
+                        <div class="ai-result-desc">1.8GB de arquivos temporários foram removidos do Chrome e sistema.</div>
+                    </div>
+                    <div class="ai-result-card">
+                        <div class="ai-result-header">
+                            <div class="ai-result-icon info">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 16v-4M12 8h.01"/>
+                                </svg>
+                            </div>
+                            <div class="ai-result-title">Recomendação</div>
+                        </div>
+                        <div class="ai-result-desc">O Discord está consumindo 800MB de RAM em segundo plano. Considere fechá-lo quando não estiver em uso.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-footer">
+                <button class="ai-action-btn" id="aiActionBtn" onclick="startAnalysis()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    Iniciar análise
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="ai-overlay" id="aiOverlay" onclick="toggleAiPanel()"></div>
+
+    <script>
+        let isAnalyzing = false;
+
+        function toggleAiPanel() {
+            const panel = document.getElementById('aiPanel');
+            const overlay = document.getElementById('aiOverlay');
+            panel.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        function startAnalysis() {
+            if (isAnalyzing) return;
+            isAnalyzing = true;
+
+            const idle = document.getElementById('aiIdle');
+            const loading = document.getElementById('aiLoading');
+            const results = document.getElementById('aiResults');
+            const actionBtn = document.getElementById('aiActionBtn');
+            const steps = loading.querySelectorAll('.ai-step');
+
+            // Reset states
+            idle.style.display = 'none';
+            results.classList.remove('active');
+            loading.classList.add('active');
+            actionBtn.disabled = true;
+            actionBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                Analisando...
+            `;
+
+            steps.forEach(step => {
+                step.classList.remove('active', 'completed');
+                step.classList.add('pending');
+            });
+
+            // Animate steps
+            let currentStep = 0;
+            const stepDuration = 1500;
+
+            function nextStep() {
+                if (currentStep > 0) {
+                    steps[currentStep - 1].classList.remove('active');
+                    steps[currentStep - 1].classList.add('completed');
+                    steps[currentStep - 1].querySelector('.ai-step-icon').innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                    `;
+                }
+
+                if (currentStep < steps.length) {
+                    steps[currentStep].classList.remove('pending');
+                    steps[currentStep].classList.add('active');
+                    currentStep++;
+                    setTimeout(nextStep, stepDuration);
+                } else {
+                    // Show results
+                    setTimeout(() => {
+                        loading.classList.remove('active');
+                        results.classList.add('active');
+                        actionBtn.disabled = false;
+                        actionBtn.innerHTML = `
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23,4 23,10 17,10"/>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                            </svg>
+                            Nova análise
+                        `;
+                        isAnalyzing = false;
+                    }, 500);
+                }
+            }
+
+            nextStep();
+        }
+
+        // Add spin animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

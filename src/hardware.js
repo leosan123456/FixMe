@@ -52,9 +52,9 @@ class HardwareMonitor {
         si.processes()
       ]);
 
-      const cpuPercent = cpuLoad.currentLoad;
-      const memPercent = (memory.used / memory.total) * 100;
-      const gpuPercent = gpu.controllers && gpu.controllers[0] 
+      const cpuPercent = cpuLoad.currentLoad || 0;
+      const memPercent = memory.total ? (memory.used / memory.total) * 100 : 0;
+      const gpuPercent = gpu.controllers && gpu.controllers[0] && gpu.controllers[0].memoryTotal
         ? gpu.controllers[0].memoryUsed / gpu.controllers[0].memoryTotal * 100
         : 0;
 
@@ -64,31 +64,32 @@ class HardwareMonitor {
       this.addToHistory('gpu', gpuPercent);
 
       // Top 3 processos por CPU
-      const topCpu = processes.list
-        .sort((a, b) => (b.pcpu || 0) - (a.pcpu || 0))
+      const procList = (processes && processes.list) || [];
+      const topCpu = [...procList]
+        .sort((a, b) => (b.cpu || b.pcpu || 0) - (a.cpu || a.pcpu || 0))
         .slice(0, 3)
         .map(p => ({
           name: p.name,
           pid: p.pid,
-          cpu: (p.pcpu || 0).toFixed(2),
-          memory: (p.pmem || 0).toFixed(2)
+          cpu: (p.cpu || p.pcpu || 0).toFixed(2),
+          memory: (p.mem || p.pmem || 0).toFixed(2)
         }));
 
       // Top 3 processos por memória
-      const topMemory = processes.list
-        .sort((a, b) => (b.pmem || 0) - (a.pmem || 0))
+      const topMemory = [...procList]
+        .sort((a, b) => (b.mem || b.pmem || 0) - (a.mem || a.pmem || 0))
         .slice(0, 3)
         .map(p => ({
           name: p.name,
           pid: p.pid,
-          memory: ((p.mem || 0) / (1024 ** 3)).toFixed(2) // GB
+          memory: (p.mem || p.pmem || 0).toFixed(2)
         }));
 
       return {
         timestamp: new Date().toISOString(),
         cpu: {
           current: cpuPercent.toFixed(2),
-          cores: cpuLoad.cores.map(c => c.load.toFixed(2)),
+          cores: (cpuLoad.cores || []).map(c => (c.load || 0).toFixed(2)),
           history: this.history.cpu
         },
         memory: {
@@ -104,7 +105,7 @@ class HardwareMonitor {
         },
         topCpuProcesses: topCpu,
         topMemoryProcesses: topMemory,
-        processCount: processes.list.length
+        processCount: procList.length
       };
     } catch (err) {
       console.error('Erro ao obter stats:', err);

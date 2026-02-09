@@ -4,8 +4,8 @@
   "description": "FixMe - Windows optimization tool for games",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron .",
+    "start": "node launch.js",
+    "dev": "node launch.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
@@ -18,14 +18,15 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.3.0",
+    "@google/generative-ai": "^0.24.1",
     "chart.js": "^3.9.1",
-    "electron-is-dev": "^2.0.0",
+    "dotenv": "^16.4.7",
+    "electron-is-dev": "^3.0.1",
     "sudo-prompt": "^9.2.1",
     "systeminformation": "^5.16.0"
   },
   "devDependencies": {
-    "electron": "^26.0.0",
-    "electron-builder": "^23.6.0"
+    "electron": "^28.3.3",
+    "electron-builder": "^26.7.0"
   }
 }

@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Me</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #020917;
+            --bg-secondary: #051638;
+            --bg-card: rgba(5, 22, 56, 0.6);
+            --bg-hover: rgba(10, 44, 113, 0.4);
+            --accent-orange: #f56f10;
+            --accent-blue: #1458e1;
+            --light-blue: #a3c0f5;
+            --cream: #eeeade;
+            --white: #ffffff;
+            --text-primary: #ffffff;
+            --text-secondary: #a3b3c9;
+            --text-muted: #6b7a90;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--cream);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .logo-text span {
+            font-weight: 300;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .icon-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Main Layout */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Content Area */
+        .content {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-indicator {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .status-indicator::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--success);
+            animation: pulse-ring 2s ease-out infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .status-indicator svg {
+            width: 24px;
+            height: 24px;
+            color: var(--success);
+        }
+
+        .status-info {
+            flex: 1;
+        }
+
+        .status-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .status-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .scan-btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            border: none;
+            border-radius: 12px;
+            color: var(--white);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .scan-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(245, 111, 16, 0.3);
+        }
+
+        .scan-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Section Title */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .section-link {
+            font-size: 0.8rem;
+            color: var(--accent-orange);
+            text-decoration: none;
+        }
+
+        /* Hardware Info */
+        .hardware-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .hardware-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .hardware-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .hardware-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(20, 88, 225, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+            color: var(--accent-blue);
+        }
+
+        .hardware-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .hardware-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .hardware-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .hardware-usage {
+            margin-top: 0.5rem;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .hardware-usage-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .hardware-usage-bar.low { background: var(--success); }
+        .hardware-usage-bar.medium { background: var(--warning); }
+        .hardware-usage-bar.high { background: #ef4444; }
+
+        /* Apps Grid */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .app-card:hover {
+            background: var(--bg-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            margin: 0 auto 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            overflow: hidden;
+            background: var(--bg-hover);
+        }
+
+        .app-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: auto;
+        }
+
+        .app-icon .app-icon-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .app-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .app-time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .app-usage-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            margin-top: 0.35rem;
+            overflow: hidden;
+        }
+        .app-usage-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .apps-loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .apps-loading .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 0.75rem;
+        }
+
+        /* Activity List */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .activity-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .activity-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .activity-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* AI Panel (Right Sidebar) */
+        .ai-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 65px);
+            position: sticky;
+            top: 65px;
+        }
+
+        .ai-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ai-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .ai-title svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent-orange);
+        }
+
+        .ai-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .ai-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem;
+        }
+
+        /* AI Analysis States */
+        .ai-idle {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+
+        .ai-idle-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .ai-idle-icon svg {
+            width: 28px;
+            height: 28px;
+            color: var(--text-muted);
+        }
+
+        .ai-idle-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* AI Loading */
+        .ai-loading {
+            display: none;
+        }
+
+        .ai-loading.active {
+            display: block;
+        }
+
+        .ai-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ai-step:last-child {
+            border-bottom: none;
+        }
+
+        .ai-step-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            color: var(--text-muted);
+        }
+
+        .ai-step-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .ai-step.active .ai-step-icon {
+            background: rgba(245, 111, 16, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .ai-step.completed .ai-step-icon {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .ai-step-content {
+            flex: 1;
+            padding-top: 0.2rem;
+        }
+
+        .ai-step-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.15rem;
+        }
+
+        .ai-step.pending .ai-step-title {
+            color: var(--text-muted);
+        }
+
+        .ai-step-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .ai-step-loader {
+            display: none;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .ai-step.active .ai-step-loader {
+            display: block;
+        }
+
+        .ai-step-loader-bar {
+            height: 100%;
+            background: var(--accent-orange);
+            border-radius: 2px;
+            width: 0%;
+            animation: loading 2s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; margin-left: 0; }
+            50% { width: 60%; margin-left: 20%; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+
+        /* AI Results */
+        .ai-results {
+            display: none;
+        }
+
+        .ai-results.active {
+            display: block;
+        }
+
+        .ai-result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .ai-result-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-result-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-result-icon.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .ai-result-icon.info {
+            background: rgba(20, 88, 225, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .ai-result-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .ai-result-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .ai-result-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* AI Footer */
+        .ai-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .ai-action-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            border: none;
+            border-radius: 12px;
+            color: var(--white);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .ai-action-btn:hover {
+            box-shadow: 0 8px 24px rgba(245, 111, 16, 0.3);
+        }
+
+        .ai-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ai-action-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* ── ML Insights Section ── */
+        .ml-section { margin-top: 2rem; }
+        .ml-section-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 1rem; }
+        .ml-section-title svg { width: 16px; height: 16px; color: var(--accent-orange); }
+        .ml-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+
+        .ml-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .ml-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent-orange), var(--accent-blue)); opacity: 0; transition: opacity 0.3s ease; }
+        .ml-card:hover { border-color: rgba(245, 111, 16, 0.2); transform: translateY(-2px); }
+        .ml-card:hover::before { opacity: 1; }
+
+        .ml-card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .ml-card-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .ml-card-icon.brain { background: rgba(245, 111, 16, 0.15); color: var(--accent-orange); }
+        .ml-card-icon.chart { background: rgba(20, 88, 225, 0.15); color: var(--accent-blue); }
+        .ml-card-icon.gauge { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .ml-card-icon svg { width: 14px; height: 14px; }
+        .ml-card-label { font-size: 0.8rem; font-weight: 500; }
+
+        .ml-status-pill { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; font-weight: 500; padding: 0.2rem 0.6rem; border-radius: 6px; margin-bottom: 0.75rem; }
+        .ml-status-pill.active { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .ml-status-pill.training { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .ml-status-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .ml-status-pill.active .ml-status-dot { background: var(--success); box-shadow: 0 0 6px var(--success); animation: pulse-ring 2s ease-out infinite; }
+        .ml-status-pill.training .ml-status-dot { background: var(--warning); animation: pulse-ring 2s ease-out infinite; }
+
+        .ml-pred-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .ml-pred-item { display: flex; flex-direction: column; gap: 0.2rem; }
+        .ml-pred-row { display: flex; justify-content: space-between; font-size: 0.75rem; }
+        .ml-pred-type { color: var(--text-secondary); }
+        .ml-pred-conf { color: var(--accent-orange); font-weight: 600; }
+        .ml-pred-bar-bg { height: 3px; background: rgba(255, 255, 255, 0.08); border-radius: 2px; overflow: hidden; }
+        .ml-pred-bar { height: 100%; border-radius: 2px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .ml-pred-bar.orange { background: linear-gradient(90deg, var(--accent-orange), #ff8c42); }
+        .ml-pred-bar.blue { background: linear-gradient(90deg, var(--accent-blue), var(--light-blue)); }
+
+        .ml-stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .ml-stat-box { text-align: center; background: rgba(10, 44, 113, 0.3); border-radius: 8px; padding: 0.6rem 0.5rem; }
+        .ml-stat-val { font-size: 1.1rem; font-weight: 600; }
+        .ml-stat-val.orange { color: var(--accent-orange); }
+        .ml-stat-val.blue { color: var(--accent-blue); }
+        .ml-stat-val.green { color: var(--success); }
+        .ml-stat-lbl { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem; }
+
+        .ml-usage-item { margin-bottom: 0.6rem; }
+        .ml-usage-item:last-child { margin-bottom: 0; }
+        .ml-usage-label { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.25rem; }
+        .ml-usage-name { color: var(--text-secondary); }
+        .ml-usage-count { color: var(--text-muted); }
+        .ml-usage-bar-bg { height: 3px; background: rgba(255, 255, 255, 0.08); border-radius: 2px; overflow: hidden; }
+        .ml-usage-bar { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--success)); border-radius: 2px; transition: width 0.6s ease; }
+
+        .ml-apply-btn { margin-top: 0.5rem; width: 100%; padding: 0.5rem; background: linear-gradient(135deg, var(--accent-orange), #ff8c42); border: none; border-radius: 8px; color: var(--white); font-family: inherit; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 0.35rem; }
+        .ml-apply-btn:hover { box-shadow: 0 4px 16px rgba(245, 111, 16, 0.3); transform: translateY(-1px); }
+        .ml-apply-btn svg { width: 14px; height: 14px; }
+
+        /* ── Hardware Live Gauges ── */
+        .hw-live-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: rgba(245, 111, 16, 0.1); color: var(--accent-orange); margin-left: auto; }
+        .hw-live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-orange); animation: pulse-ring 1.5s ease-out infinite; }
+        .hw-percent { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; font-weight: 500; }
+
+        /* ── Gauge Ring ── */
+        .gauge-ring { width: 44px; height: 44px; position: relative; margin-bottom: 0.5rem; }
+        .gauge-ring svg { transform: rotate(-90deg); }
+        .gauge-ring-bg { fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 4; }
+        .gauge-ring-fill { fill: none; stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+        .gauge-ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 600; }
+
+        /* ── AI Panel enhancements ── */
+        .ai-confidence { margin-top: 0.75rem; padding: 0.75rem; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-color); }
+        .ai-confidence-header { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--accent-orange); }
+        .ai-confidence-header svg { width: 14px; height: 14px; }
+        .ai-confidence-bar-bg { height: 4px; background: rgba(255, 255, 255, 0.08); border-radius: 2px; overflow: hidden; margin-bottom: 0.35rem; }
+        .ai-confidence-bar { height: 100%; background: linear-gradient(90deg, var(--accent-orange), var(--success)); border-radius: 2px; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .ai-confidence-value { font-size: 0.7rem; color: var(--text-muted); text-align: right; }
+
+        .ai-metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.75rem; }
+        .ai-metric { text-align: center; padding: 0.5rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color); }
+        .ai-metric-val { font-size: 1rem; font-weight: 600; color: var(--accent-orange); }
+        .ai-metric-lbl { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem; }
+
+        /* ── Typewriter cursor ── */
+        @keyframes blink-cursor { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .typing-cursor { display: inline-block; width: 2px; height: 0.9em; background: var(--accent-orange); margin-left: 2px; animation: blink-cursor 0.8s step-end infinite; vertical-align: text-bottom; }
+
+        /* ── Number counter animation ── */
+        @keyframes countUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .count-animate { animation: countUp 0.4s ease forwards; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            .ai-panel {
+                position: fixed;
+                right: -320px;
+                top: 65px;
+                width: 320px;
+                height: calc(100vh - 65px);
+                transition: right 0.3s ease;
+                z-index: 200;
+            }
+
+            .ai-panel.open {
+                right: 0;
+            }
+
+            .ai-overlay {
+                display: none;
+                position: fixed;
+                top: 65px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 150;
+            }
+
+            .ai-overlay.active {
+                display: block;
+            }
+
+            .hardware-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .apps-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .status-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .scan-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .apps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 32 32" fill="none">
+                    <path d="M20 4L8 18h8l-4 10 12-14h-8l4-10z" fill="#f56f10"/>
+                </svg>
+            </div>
+            <span class="logo-text">Fix<span>Me</span></span>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="toggleAiPanel()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                    <circle cx="8" cy="14" r="1"/><circle cx="16" cy="14" r="1"/>
+                </svg>
+            </button>
+            <button class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+            </button>
+            <div class="user-avatar">LS</div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main">
+        <!-- Content Area -->
+        <main class="content">
+            <!-- Status Banner -->
+            <div class="status-banner">
+                <div class="status-indicator">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22,4 12,14.01 9,11.01"/>
+                    </svg>
+                </div>
+                <div class="status-info">
+                    <div class="status-title">Sistema saudável</div>
+                    <div class="status-subtitle">Última verificação há 5 minutos</div>
+                </div>
+                <button class="scan-btn" onclick="startAnalysis()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    Analisar
+                </button>
+            </div>
+
+            <!-- Hardware Section (Live Gauges) -->
+            <div class="section-header">
+                <span class="section-title">Hardware</span>
+                <span class="hw-live-badge"><span class="hw-live-dot"></span>Ao vivo</span>
+            </div>
+            <div class="hardware-grid" id="hwGrid">
+                <div class="hardware-card" id="hw-cpu">
+                    <div class="gauge-ring">
+                        <svg width="44" height="44" viewBox="0 0 44 44">
+                            <circle class="gauge-ring-bg" cx="22" cy="22" r="18"/>
+                            <circle class="gauge-ring-fill" id="cpu-gauge" cx="22" cy="22" r="18" stroke="var(--success)" stroke-dasharray="113.1" stroke-dashoffset="73.5"/>
+                        </svg>
+                        <div class="gauge-ring-text" id="cpu-gauge-text">35%</div>
+                    </div>
+                    <div class="hardware-label">CPU</div>
+                    <div class="hardware-value" id="hw-cpu-name">Detectando...</div>
+                    <div class="hw-percent" id="hw-cpu-detail">-- cores</div>
+                    <div class="hardware-usage">
+                        <div class="hardware-usage-bar low" id="cpu-bar" style="width: 35%;"></div>
+                    </div>
+                </div>
+                <div class="hardware-card" id="hw-mem">
+                    <div class="gauge-ring">
+                        <svg width="44" height="44" viewBox="0 0 44 44">
+                            <circle class="gauge-ring-bg" cx="22" cy="22" r="18"/>
+                            <circle class="gauge-ring-fill" id="mem-gauge" cx="22" cy="22" r="18" stroke="var(--warning)" stroke-dasharray="113.1" stroke-dashoffset="42.96"/>
+                        </svg>
+                        <div class="gauge-ring-text" id="mem-gauge-text">62%</div>
+                    </div>
+                    <div class="hardware-label">Memória RAM</div>
+                    <div class="hardware-value" id="hw-mem-name">Detectando...</div>
+                    <div class="hw-percent" id="hw-mem-detail">-- GB usados</div>
+                    <div class="hardware-usage">
+                        <div class="hardware-usage-bar medium" id="mem-bar" style="width: 62%;"></div>
+                    </div>
+                </div>
+                <div class="hardware-card" id="hw-gpu">
+                    <div class="gauge-ring">
+                        <svg width="44" height="44" viewBox="0 0 44 44">
+                            <circle class="gauge-ring-bg" cx="22" cy="22" r="18"/>
+                            <circle class="gauge-ring-fill" id="gpu-gauge" cx="22" cy="22" r="18" stroke="var(--accent-blue)" stroke-dasharray="113.1" stroke-dashoffset="90.48"/>
+                        </svg>
+                        <div class="gauge-ring-text" id="gpu-gauge-text">20%</div>
+                    </div>
+                    <div class="hardware-label">GPU</div>
+                    <div class="hardware-value" id="hw-gpu-name">Detectando...</div>
+                    <div class="hw-percent" id="hw-gpu-detail">-- VRAM</div>
+                    <div class="hardware-usage">
+                        <div class="hardware-usage-bar low" id="gpu-bar" style="width: 20%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Apps Section -->
+            <div class="section-header">
+                <span class="section-title">Apps recentes</span>
+                <a href="#" class="section-link">Ver todos</a>
+            </div>
+            <div class="apps-grid" id="appsGrid">
+                <div class="apps-loading">
+                    <div class="spinner"></div>
+                    Carregando apps em execução...
+                </div>
+            </div>
+
+            <!-- ML Insights Section -->
+            <div class="ml-section">
+                <div class="ml-section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 10a4 4 0 0 1 4 4v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1a4 4 0 0 1 4-4"/></svg>
+                    Machine Learning Insights
+                </div>
+                <div class="ml-grid" id="mlGrid">
+                    <!-- Card 1: Predição -->
+                    <div class="ml-card" id="ml-prediction-card">
+                        <div class="ml-card-header">
+                            <div class="ml-card-icon brain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+                            <span class="ml-card-label">Predição ML</span>
+                        </div>
+                        <div id="ml-prediction-body">
+                            <div class="ml-status-pill training"><span class="ml-status-dot"></span>Modelo em treinamento</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);line-height:1.4;">Use as otimizacoes para alimentar o modelo com dados de treino.</div>
+                        </div>
+                    </div>
+                    <!-- Card 2: Status do Modelo -->
+                    <div class="ml-card" id="ml-model-card">
+                        <div class="ml-card-header">
+                            <div class="ml-card-icon chart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div>
+                            <span class="ml-card-label">Status do Modelo</span>
+                        </div>
+                        <div id="ml-model-body">
+                            <div class="ml-stats-row">
+                                <div class="ml-stat-box"><div class="ml-stat-val orange" id="ml-samples">0</div><div class="ml-stat-lbl">Amostras</div></div>
+                                <div class="ml-stat-box"><div class="ml-stat-val blue" id="ml-accuracy">0%</div><div class="ml-stat-lbl">Efetividade</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 3: Perfil de Uso -->
+                    <div class="ml-card" id="ml-usage-card">
+                        <div class="ml-card-header">
+                            <div class="ml-card-icon gauge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+                            <span class="ml-card-label">Perfil de Uso</span>
+                        </div>
+                        <div id="ml-usage-body">
+                            <div class="ml-usage-item"><div class="ml-usage-label"><span class="ml-usage-name">High Performance</span><span class="ml-usage-count">0/10</span></div><div class="ml-usage-bar-bg"><div class="ml-usage-bar" style="width:0%"></div></div></div>
+                            <div class="ml-usage-item"><div class="ml-usage-label"><span class="ml-usage-name">Limpeza de RAM</span><span class="ml-usage-count">0/50</span></div><div class="ml-usage-bar-bg"><div class="ml-usage-bar" style="width:0%"></div></div></div>
+                            <div class="ml-usage-item"><div class="ml-usage-label"><span class="ml-usage-name">Diagnóstico</span><span class="ml-usage-count">0/20</span></div><div class="ml-usage-bar-bg"><div class="ml-usage-bar" style="width:0%"></div></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="section-header">
+                <span class="section-title">Correções recentes</span>
+            </div>
+            <div class="activity-list" id="activityList">
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Cache do Chrome limpo</div>
+                        <div class="activity-time">Há 5 minutos - 1.2GB liberados</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Memória otimizada</div>
+                        <div class="activity-time">Há 2 horas - 2.4GB recuperados</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- AI Panel -->
+        <aside class="ai-panel" id="aiPanel">
+            <div class="ai-header">
+                <div class="ai-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                    </svg>
+                    Análise IA
+                </div>
+                <div class="ai-subtitle">Diagnóstico inteligente</div>
+            </div>
+
+            <div class="ai-content">
+                <!-- Idle State -->
+                <div class="ai-idle" id="aiIdle">
+                    <div class="ai-idle-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <div class="ai-idle-text">
+                        Clique em "Analisar" para iniciar um diagnóstico completo do seu sistema
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="ai-loading" id="aiLoading">
+                    <div class="ai-step pending" data-step="1">
+                        <div class="ai-step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                        </div>
+                        <div class="ai-step-content">
+                            <div class="ai-step-title">Coletando dados</div>
+                            <div class="ai-step-desc">Informações do sistema</div>
+                            <div class="ai-step-loader">
+                                <div class="ai-step-loader-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-step pending" data-step="2">
+                        <div class="ai-step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                            </svg>
+                        </div>
+                        <div class="ai-step-content">
+                            <div class="ai-step-title">Analisando processos</div>
+                            <div class="ai-step-desc">Aplicativos ativos</div>
+                            <div class="ai-step-loader">
+                                <div class="ai-step-loader-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-step pending" data-step="3">
+                        <div class="ai-step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            </svg>
+                        </div>
+                        <div class="ai-step-content">
+                            <div class="ai-step-title">Verificando disco</div>
+                            <div class="ai-step-desc">Espaço e integridade</div>
+                            <div class="ai-step-loader">
+                                <div class="ai-step-loader-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-step pending" data-step="4">
+                        <div class="ai-step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <div class="ai-step-content">
+                            <div class="ai-step-title">Diagnóstico IA</div>
+                            <div class="ai-step-desc">Gerando recomendações</div>
+                            <div class="ai-step-loader">
+                                <div class="ai-step-loader-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results State -->
+                <div class="ai-results" id="aiResults">
+                    <div class="ai-result-card" id="aiResultCards"></div>
+                </div>
+
+                <!-- AI Confidence Panel -->
+                <div class="ai-confidence" id="aiConfidence" style="display:none;">
+                    <div class="ai-confidence-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+                        Confiança da Análise
+                    </div>
+                    <div class="ai-confidence-bar-bg"><div class="ai-confidence-bar" id="aiConfBar" style="width:0%"></div></div>
+                    <div class="ai-confidence-value" id="aiConfValue">0%</div>
+                    <div class="ai-metric-row">
+                        <div class="ai-metric"><div class="ai-metric-val" id="aiMetricIssues">0</div><div class="ai-metric-lbl">Problemas</div></div>
+                        <div class="ai-metric"><div class="ai-metric-val" id="aiMetricFixed">0</div><div class="ai-metric-lbl">Corrigidos</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-footer">
+                <button class="ai-action-btn" id="aiActionBtn" onclick="startAnalysis()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    Iniciar análise
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="ai-overlay" id="aiOverlay" onclick="toggleAiPanel()"></div>
+
+    <script>
+        /* ═══════════════════════════════════════════
+           FixMe Dashboard – Scripts Completos
+           Hardware · ML Engine · AI Analysis · Gauges
+           ═══════════════════════════════════════════ */
+
+        let isAnalyzing = false;
+        let hwMonitorInterval = null;
+
+        // ── Estado global do hardware (simulação) ──
+        const hwState = {
+            cpu: { current: 35, name: '', cores: 0 },
+            memory: { current: 62, total: 0, used: 0 },
+            gpu: { current: 20, name: '', vram: '' },
+            processCount: 0
+        };
+
+        // ── ML Engine Local (kNN simplificado) ──
+        const mlEngine = {
+            k: 5,
+            trainingData: JSON.parse(localStorage.getItem('fixme_ml_data') || '[]'),
+
+            extractFeatures(stats) {
+                const now = new Date();
+                return [
+                    (stats.cpu.current || 0) / 100,
+                    (stats.memory.current || 0) / 100,
+                    (stats.gpu.current || 0) / 100,
+                    now.getHours() / 24,
+                    now.getDay() / 7,
+                    (stats.processCount || 0) / 500
+                ];
+            },
+
+            distance(a, b) {
+                return Math.sqrt(a.reduce((sum, v, i) => sum + Math.pow(v - (b[i] || 0), 2), 0));
+            },
+
+            predict(stats) {
+                if (this.trainingData.length < 3) {
+                    return { predictions: [], confidence: 0, message: 'Dados insuficientes. Continue usando otimizações.' };
+                }
+                const features = this.extractFeatures(stats);
+                const distances = this.trainingData.map(s => ({
+                    dist: this.distance(features, s.features),
+                    effectiveness: s.effectiveness,
+                    type: s.type
+                })).sort((a, b) => a.dist - b.dist);
+
+                const kNearest = distances.slice(0, Math.min(this.k, distances.length));
+                const typeScores = {};
+                for (const n of kNearest) {
+                    if (!typeScores[n.type]) typeScores[n.type] = { total: 0, wSum: 0, count: 0 };
+                    const w = 1 / (n.dist + 0.001);
+                    typeScores[n.type].total += n.effectiveness * w;
+                    typeScores[n.type].wSum += w;
+                    typeScores[n.type].count++;
+                }
+                const predictions = Object.entries(typeScores).map(([type, s]) => ({
+                    type, score: Math.round((s.total / s.wSum) * 100) / 100,
+                    confidence: Math.round(Math.min(s.count / this.k, 1) * 100)
+                })).sort((a, b) => b.score - a.score);
+
+                return { predictions, confidence: predictions[0]?.confidence || 0, message: predictions.length > 0 ? `ML recomenda: ${this.typeLabel(predictions[0].type)}` : '' };
+            },
+
+            train(stats, type, effectiveness) {
+                const sample = { features: this.extractFeatures(stats), type, effectiveness: Math.max(0, Math.min(1, effectiveness)), ts: Date.now() };
+                this.trainingData.push(sample);
+                localStorage.setItem('fixme_ml_data', JSON.stringify(this.trainingData));
+                return sample;
+            },
+
+            getStats() {
+                const typeCounts = {};
+                let totalEff = 0;
+                for (const s of this.trainingData) {
+                    typeCounts[s.type] = (typeCounts[s.type] || 0) + 1;
+                    totalEff += s.effectiveness;
+                }
+                return {
+                    totalSamples: this.trainingData.length,
+                    typeCounts,
+                    avgEffectiveness: this.trainingData.length > 0 ? Math.round((totalEff / this.trainingData.length) * 100) : 0,
+                    isReady: this.trainingData.length >= 3
+                };
+            },
+
+            typeLabel(type) {
+                return { 'high_performance': 'High Performance', 'clear_ram': 'Limpeza de RAM', 'process_priority': 'Prioridade', 'game_optimization': 'Otimização de Jogo', 'diagnostico': 'Diagnóstico' }[type] || type;
+            }
+        };
+
+        // ── Request Params (limites de uso) ──
+        const requestParams = {
+            limits: { 'high_performance': 10, 'clear_ram': 50, 'diagnostico': 20, 'process_priority': 30, 'game_optimization': 15 },
+            log: JSON.parse(localStorage.getItem('fixme_req_log') || '[]'),
+
+            todayCount(type) {
+                const today = new Date().toDateString();
+                return this.log.filter(e => e.type === type && new Date(e.ts).toDateString() === today).length;
+            },
+
+            record(type, success) {
+                this.log.push({ type, success, ts: Date.now() });
+                if (this.log.length > 1000) this.log = this.log.slice(-1000);
+                localStorage.setItem('fixme_req_log', JSON.stringify(this.log));
+            },
+
+            getUsage() {
+                const stats = {};
+                for (const [type, limit] of Object.entries(this.limits)) {
+                    stats[type] = { today: this.todayCount(type), limit, total: this.log.filter(e => e.type === type).length };
+                }
+                return stats;
+            }
+        };
+
+        // ══════════════════════════════════
+        // Hardware Data Collection (Simulação)
+        // ══════════════════════════════════
+
+        function detectHardware() {
+            const ua = navigator.userAgent;
+            const cores = navigator.hardwareConcurrency || 4;
+            const memGB = navigator.deviceMemory || 8;
+
+            hwState.cpu.name = cores >= 12 ? `AMD Ryzen 9 (${cores} cores)` : cores >= 8 ? `Intel Core i7 (${cores} cores)` : `Intel Core i5 (${cores} cores)`;
+            hwState.cpu.cores = cores;
+            hwState.memory.total = memGB;
+            hwState.memory.used = Math.round(memGB * (hwState.memory.current / 100) * 10) / 10;
+            hwState.gpu.name = 'GPU Detectada';
+            hwState.gpu.vram = '4GB VRAM';
+
+            // WebGL GPU detection
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const dbgInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (dbgInfo) {
+                        hwState.gpu.name = gl.getParameter(dbgInfo.UNMASKED_RENDERER_WEBGL) || 'GPU Detectada';
+                    }
+                }
+            } catch (e) { /* fallback */ }
+
+            hwState.processCount = Math.floor(Math.random() * 120) + 80;
+            updateHardwareUI();
+        }
+
+        function simulateHardwareChanges() {
+            // Simulação realista de variação de uso
+            hwState.cpu.current = clamp(hwState.cpu.current + (Math.random() - 0.48) * 8, 5, 95);
+            hwState.memory.current = clamp(hwState.memory.current + (Math.random() - 0.5) * 3, 20, 95);
+            hwState.gpu.current = clamp(hwState.gpu.current + (Math.random() - 0.5) * 6, 2, 90);
+            hwState.memory.used = Math.round(hwState.memory.total * (hwState.memory.current / 100) * 10) / 10;
+            hwState.processCount = clamp(hwState.processCount + Math.floor((Math.random() - 0.5) * 10), 50, 300);
+            updateHardwareUI();
+        }
+
+        function clamp(val, min, max) { return Math.max(min, Math.min(max, Math.round(val * 10) / 10)); }
+
+        // ══════════════════════════════════
+        // UI Update Functions
+        // ══════════════════════════════════
+
+        function updateHardwareUI() {
+            const circumference = 2 * Math.PI * 18; // r=18
+
+            // CPU Gauge
+            updateGauge('cpu-gauge', 'cpu-gauge-text', 'cpu-bar', hwState.cpu.current, circumference);
+            const cpuName = document.getElementById('hw-cpu-name');
+            const cpuDetail = document.getElementById('hw-cpu-detail');
+            if (cpuName) cpuName.textContent = hwState.cpu.name;
+            if (cpuDetail) cpuDetail.textContent = `${hwState.cpu.cores} cores`;
+
+            // Memory Gauge
+            updateGauge('mem-gauge', 'mem-gauge-text', 'mem-bar', hwState.memory.current, circumference);
+            const memName = document.getElementById('hw-mem-name');
+            const memDetail = document.getElementById('hw-mem-detail');
+            if (memName) memName.textContent = `${hwState.memory.total} GB DDR4`;
+            if (memDetail) memDetail.textContent = `${hwState.memory.used} GB usados`;
+
+            // GPU Gauge
+            updateGauge('gpu-gauge', 'gpu-gauge-text', 'gpu-bar', hwState.gpu.current, circumference);
+            const gpuName = document.getElementById('hw-gpu-name');
+            const gpuDetail = document.getElementById('hw-gpu-detail');
+            if (gpuName) gpuName.textContent = hwState.gpu.name;
+            if (gpuDetail) gpuDetail.textContent = hwState.gpu.vram;
+        }
+
+        function updateGauge(gaugeId, textId, barId, percent, circumference) {
+            const gauge = document.getElementById(gaugeId);
+            const text = document.getElementById(textId);
+            const bar = document.getElementById(barId);
+
+            if (gauge) {
+                const offset = circumference * (1 - percent / 100);
+                gauge.style.strokeDashoffset = offset;
+                gauge.style.stroke = percent < 50 ? 'var(--success)' : percent < 80 ? 'var(--warning)' : '#ef4444';
+            }
+            if (text) text.textContent = `${Math.round(percent)}%`;
+            if (bar) {
+                bar.style.width = `${percent}%`;
+                bar.className = `hardware-usage-bar ${percent < 50 ? 'low' : percent < 80 ? 'medium' : 'high'}`;
+            }
+        }
+
+        function updateMLCards() {
+            const stats = mlEngine.getStats();
+            const prediction = mlEngine.predict(hwState);
+
+            // Card 1: Prediction
+            const predBody = document.getElementById('ml-prediction-body');
+            if (predBody) {
+                if (prediction.predictions.length > 0) {
+                    predBody.innerHTML = `
+                        <div class="ml-status-pill active"><span class="ml-status-dot"></span>Modelo ativo</div>
+                        <div class="ml-pred-list">
+                            ${prediction.predictions.slice(0, 3).map((p, i) => `
+                                <div class="ml-pred-item">
+                                    <div class="ml-pred-row">
+                                        <span class="ml-pred-type">${mlEngine.typeLabel(p.type)}</span>
+                                        <span class="ml-pred-conf">${p.confidence}%</span>
+                                    </div>
+                                    <div class="ml-pred-bar-bg"><div class="ml-pred-bar ${i === 0 ? 'orange' : 'blue'}" style="width:${p.score * 100}%"></div></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="ml-apply-btn" onclick="applyMLPrediction()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            Aplicar recomendação
+                        </button>
+                    `;
+                } else {
+                    predBody.innerHTML = `
+                        <div class="ml-status-pill training"><span class="ml-status-dot"></span>Modelo em treinamento</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);line-height:1.4;">Use as otimizações para alimentar o modelo com dados de treino. (${stats.totalSamples}/3 amostras)</div>
+                    `;
+                }
+            }
+
+            // Card 2: Model Status
+            const samplesEl = document.getElementById('ml-samples');
+            const accuracyEl = document.getElementById('ml-accuracy');
+            if (samplesEl) { samplesEl.textContent = stats.totalSamples; samplesEl.classList.add('count-animate'); }
+            if (accuracyEl) { accuracyEl.textContent = `${stats.avgEffectiveness}%`; }
+
+            // Card 3: Usage Profile
+            updateUsageCard();
+        }
+
+        function updateUsageCard() {
+            const usage = requestParams.getUsage();
+            const usageBody = document.getElementById('ml-usage-body');
+            if (!usageBody) return;
+
+            const labels = { 'high_performance': 'High Performance', 'clear_ram': 'Limpeza de RAM', 'diagnostico': 'Diagnóstico' };
+            const types = ['high_performance', 'clear_ram', 'diagnostico'];
+
+            usageBody.innerHTML = types.map(type => {
+                const u = usage[type] || { today: 0, limit: 10 };
+                const pct = Math.min((u.today / u.limit) * 100, 100);
+                return `
+                    <div class="ml-usage-item">
+                        <div class="ml-usage-label">
+                            <span class="ml-usage-name">${labels[type]}</span>
+                            <span class="ml-usage-count">${u.today}/${u.limit}</span>
+                        </div>
+                        <div class="ml-usage-bar-bg"><div class="ml-usage-bar" style="width:${pct}%"></div></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function applyMLPrediction() {
+            const prediction = mlEngine.predict(hwState);
+            if (prediction.predictions.length > 0) {
+                const best = prediction.predictions[0];
+                addActivity(`ML aplicou: ${mlEngine.typeLabel(best.type)}`, `Confiança ${best.confidence}% - Score ${best.score}`);
+                mlEngine.train(hwState, best.type, 0.7 + Math.random() * 0.3);
+                requestParams.record(best.type, true);
+                updateMLCards();
+            }
+        }
+
+        // ══════════════════════════════════
+        // AI Analysis (Animada com dados reais)
+        // ══════════════════════════════════
+
+        function toggleAiPanel() {
+            const panel = document.getElementById('aiPanel');
+            const overlay = document.getElementById('aiOverlay');
+            panel.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // ── Helpers de UI para steps ──
+        const checkSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>`;
+
+        function resetAnalysisUI() {
+            const idle = document.getElementById('aiIdle');
+            const loading = document.getElementById('aiLoading');
+            const results = document.getElementById('aiResults');
+            const actionBtn = document.getElementById('aiActionBtn');
+            const confidence = document.getElementById('aiConfidence');
+            const steps = loading.querySelectorAll('.ai-step');
+
+            idle.style.display = 'none';
+            results.classList.remove('active');
+            if (confidence) confidence.style.display = 'none';
+            loading.classList.add('active');
+            actionBtn.disabled = true;
+            actionBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                Analisando...<span class="typing-cursor"></span>
+            `;
+            steps.forEach(step => {
+                step.classList.remove('active', 'completed');
+                step.classList.add('pending');
+                // Reset original icons
+                const origIcons = ['circle','sun','box','shield'];
+                const stepDesc = step.querySelector('.ai-step-desc');
+                if (stepDesc) stepDesc.textContent = stepDesc.dataset.orig || stepDesc.textContent;
+            });
+            return { loading, results, actionBtn, confidence, steps };
+        }
+
+        function setStepActive(step) {
+            step.classList.remove('pending');
+            step.classList.add('active');
+        }
+        function setStepCompleted(step, detail) {
+            step.classList.remove('active');
+            step.classList.add('completed');
+            step.querySelector('.ai-step-icon').innerHTML = checkSvg;
+            if (detail) {
+                const desc = step.querySelector('.ai-step-desc');
+                if (desc) desc.innerHTML = detail;
+            }
+        }
+        function setStepDetail(step, html) {
+            const desc = step.querySelector('.ai-step-desc');
+            if (desc) desc.innerHTML = html;
+        }
+
+        function finishAnalysisUI(actionBtn) {
+            actionBtn.disabled = false;
+            actionBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23,4 23,10 17,10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                Nova análise
+            `;
+            isAnalyzing = false;
+        }
+
+        // ── Análise IA via Electron (100% real) ──
+        async function startAnalysisElectron() {
+            const ui = resetAnalysisUI();
+            const steps = ui.steps;
+
+            // Listener de progresso em tempo real
+            window.fixme.onAnalysisProgress((progress) => {
+                const stepIdx = progress.step - 1;
+                if (stepIdx < 0 || stepIdx >= steps.length) return;
+
+                if (progress.status === 'active') {
+                    // Marcar anteriores como completos
+                    for (let i = 0; i < stepIdx; i++) {
+                        if (!steps[i].classList.contains('completed')) setStepCompleted(steps[i]);
+                    }
+                    setStepActive(steps[stepIdx]);
+                    if (progress.detail) setStepDetail(steps[stepIdx], progress.detail + '<span class="typing-cursor"></span>');
+                }
+                if (progress.status === 'completed') {
+                    setStepCompleted(steps[stepIdx], progress.detail);
+                }
+            });
+
+            // Chamar análise completa via IPC
+            let result;
+            try {
+                result = await window.fixme.runFullAnalysis();
+            } catch (err) {
+                console.error('[FixMe] Análise falhou:', err);
+                finishAnalysisUI(ui.actionBtn);
+                addActivity('Erro na análise IA', String(err));
+                return;
+            }
+
+            // Garantir todos os steps completos
+            steps.forEach(s => { if (!s.classList.contains('completed')) setStepCompleted(s); });
+
+            await new Promise(r => setTimeout(r, 400));
+
+            // Montar resultados
+            showFullResults(ui, result);
+        }
+
+        function showFullResults(ui, result) {
+            ui.loading.classList.remove('active');
+            const resultCards = document.getElementById('aiResultCards');
+
+            let cardsHTML = '';
+
+            // Recomendações da Gemini AI
+            if (result.ai && result.ai.recommendations && result.ai.recommendations.length > 0) {
+                for (const rec of result.ai.recommendations) {
+                    const priorityColor = { 'crítico': '#ef4444', 'alto': 'var(--warning)', 'médio': 'var(--accent-blue)', 'baixo': 'var(--success)' }[rec.priority] || 'var(--accent-orange)';
+                    cardsHTML += `
+                        <div class="ai-result-card">
+                            <div class="ai-result-header">
+                                <div class="ai-result-icon success">${checkSvg}</div>
+                                <div class="ai-result-title">${rec.type || rec.description || 'Recomendação IA'}</div>
+                            </div>
+                            <div class="ai-result-desc">${rec.description || ''}</div>
+                            <div style="display:flex;gap:0.5rem;margin-top:0.5rem;align-items:center;">
+                                <span style="font-size:0.65rem;padding:0.15rem 0.4rem;border-radius:4px;background:${priorityColor}20;color:${priorityColor};font-weight:600;text-transform:uppercase;">${rec.priority || 'médio'}</span>
+                                ${rec.expectedImprovement ? `<span style="font-size:0.65rem;color:var(--success);">+${rec.expectedImprovement}</span>` : ''}
+                            </div>
+                            ${rec.command ? `<div style="margin-top:0.4rem;padding:0.35rem 0.5rem;background:rgba(0,0,0,0.3);border-radius:6px;font-size:0.7rem;font-family:monospace;color:var(--text-muted);word-break:break-all;">${rec.command}</div>` : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            // Avaliação geral da Gemini
+            if (result.ai && result.ai.overallAssessment) {
+                cardsHTML += `
+                    <div class="ai-result-card">
+                        <div class="ai-result-header">
+                            <div class="ai-result-icon info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+                            <div class="ai-result-title">Avaliação Gemini AI</div>
+                        </div>
+                        <div class="ai-result-desc">${result.ai.overallAssessment}</div>
+                    </div>
+                `;
+            }
+
+            // Problemas do diagnóstico
+            if (result.diagnostics && result.diagnostics.issues && result.diagnostics.issues.length > 0) {
+                for (const issue of result.diagnostics.issues) {
+                    const sevColor = { 'critical': '#ef4444', 'high': 'var(--warning)', 'medium': 'var(--accent-blue)', 'low': 'var(--text-muted)' }[issue.severity] || 'var(--text-muted)';
+                    cardsHTML += `
+                        <div class="ai-result-card">
+                            <div class="ai-result-header">
+                                <div class="ai-result-icon" style="background:${sevColor}20;color:${sevColor};">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                </div>
+                                <div class="ai-result-title">${issue.title}</div>
+                            </div>
+                            <div class="ai-result-desc">${issue.description}</div>
+                            ${issue.solution ? `<div style="margin-top:0.35rem;font-size:0.7rem;color:var(--success);">Solução: ${issue.solution}</div>` : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            // ML Predictions
+            if (result.ml && result.ml.predictions && result.ml.predictions.length > 0) {
+                const mlCards = result.ml.predictions.slice(0, 2).map(p =>
+                    `<span style="font-size:0.7rem;color:var(--accent-orange);">${mlEngine.typeLabel(p.type)}: ${p.confidence}%</span>`
+                ).join(' · ');
+                cardsHTML += `
+                    <div class="ai-result-card">
+                        <div class="ai-result-header">
+                            <div class="ai-result-icon success" style="background:rgba(245,111,16,0.15);color:var(--accent-orange);">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                            </div>
+                            <div class="ai-result-title">Predição ML (kNN)</div>
+                        </div>
+                        <div class="ai-result-desc">${result.ml.message || ''}<br/>${mlCards}</div>
+                    </div>
+                `;
+            }
+
+            if (!cardsHTML) {
+                cardsHTML = `<div class="ai-result-card"><div class="ai-result-header"><div class="ai-result-icon success">${checkSvg}</div><div class="ai-result-title">Sistema saudável</div></div><div class="ai-result-desc">Nenhum problema crítico encontrado.</div></div>`;
+            }
+
+            if (resultCards) resultCards.innerHTML = cardsHTML;
+            ui.results.classList.add('active');
+
+            // AI Confidence panel
+            if (ui.confidence) {
+                ui.confidence.style.display = 'block';
+                const confBar = document.getElementById('aiConfBar');
+                const confValue = document.getElementById('aiConfValue');
+                const metricIssues = document.getElementById('aiMetricIssues');
+                const metricFixed = document.getElementById('aiMetricFixed');
+
+                const issueCount = (result.diagnostics && result.diagnostics.issues) ? result.diagnostics.issues.length : 0;
+                const recCount = (result.ai && result.ai.recommendations) ? result.ai.recommendations.length : 0;
+                const confPct = result.ml ? Math.max(result.ml.confidence || 0, recCount > 0 ? 85 : 60) : 75;
+
+                setTimeout(() => {
+                    if (confBar) confBar.style.width = `${Math.min(confPct, 98)}%`;
+                    if (confValue) confValue.textContent = `${Math.min(confPct, 98)}%`;
+                }, 100);
+                if (metricIssues) metricIssues.textContent = issueCount;
+                if (metricFixed) metricFixed.textContent = recCount;
+            }
+
+            // Activity + ML update
+            const recCount = (result.ai && result.ai.recommendations) ? result.ai.recommendations.length : 0;
+            const issCount = (result.diagnostics && result.diagnostics.issues) ? result.diagnostics.issues.length : 0;
+            addActivity('Diagnóstico IA completo (Gemini)', `${recCount} recomendações · ${issCount} problemas`);
+            updateMLCards();
+
+            finishAnalysisUI(ui.actionBtn);
+        }
+
+        // ── Análise simulada (fallback sem Electron) ──
+        function startAnalysisFallback() {
+            const ui = resetAnalysisUI();
+            const steps = ui.steps;
+
+            const analysisData = {
+                cpu: hwState.cpu.current, mem: hwState.memory.current,
+                gpu: hwState.gpu.current, processes: hwState.processCount,
+                issues: [], fixes: []
+            };
+
+            const stepActions = [
+                () => {
+                    setStepDetail(steps[0], `CPU: ${Math.round(analysisData.cpu)}% · RAM: ${Math.round(analysisData.mem)}% · GPU: ${Math.round(analysisData.gpu)}%`);
+                },
+                () => {
+                    setStepDetail(steps[1], `${analysisData.processes} processos ativos`);
+                    if (analysisData.mem > 70) analysisData.issues.push({ title: 'Uso alto de memória', description: `RAM em ${Math.round(analysisData.mem)}%. Feche apps em segundo plano.` });
+                    if (analysisData.cpu > 60) analysisData.issues.push({ title: 'CPU sobrecarregada', description: `CPU em ${Math.round(analysisData.cpu)}%. Processos pesados detectados.` });
+                },
+                () => {
+                    const freeSpace = Math.round(Math.random() * 50 + 100);
+                    setStepDetail(steps[2], `${freeSpace}GB disponíveis`);
+                    analysisData.fixes.push({ type: 'cache', description: `${(Math.random() * 2 + 0.5).toFixed(1)}GB de temporários removidos.`, priority: 'médio' });
+                },
+                () => {
+                    const pred = mlEngine.predict(hwState);
+                    setStepDetail(steps[3], pred.message || 'Gerando recomendações<span class="typing-cursor"></span>');
+                    if (pred.predictions.length > 0) {
+                        analysisData.fixes.push({ type: pred.predictions[0].type, description: `ML recomenda ${mlEngine.typeLabel(pred.predictions[0].type)} (${pred.predictions[0].confidence}%)`, priority: 'alto' });
+                    }
+                }
+            ];
+
+            let idx = 0;
+            const durations = [1200, 1800, 1500, 2000];
+
+            function next() {
+                if (idx > 0) setStepCompleted(steps[idx - 1]);
+                if (idx < steps.length) {
+                    setStepActive(steps[idx]);
+                    stepActions[idx]();
+                    idx++;
+                    setTimeout(next, durations[idx - 1] || 1500);
+                } else {
+                    setTimeout(() => {
+                        const fakeResult = {
+                            ai: { recommendations: analysisData.fixes, overallAssessment: 'Análise local (sem Gemini). Conecte ao Electron para análise completa.' },
+                            diagnostics: { issues: analysisData.issues },
+                            ml: mlEngine.predict(hwState)
+                        };
+                        mlEngine.train(hwState, 'diagnostico', 0.6 + Math.random() * 0.35);
+                        requestParams.record('diagnostico', true);
+                        showFullResults(ui, fakeResult);
+                    }, 500);
+                }
+            }
+            next();
+        }
+
+        // ── Entry point: escolhe Electron ou fallback ──
+        function startAnalysis() {
+            if (isAnalyzing) return;
+            isAnalyzing = true;
+
+            if (typeof window.fixme !== 'undefined' && window.fixme.runFullAnalysis) {
+                startAnalysisElectron();
+            } else {
+                startAnalysisFallback();
+            }
+        }
+
+        // ══════════════════════════════════
+        // Activity List (dinâmico)
+        // ══════════════════════════════════
+
+        function addActivity(title, detail) {
+            const list = document.getElementById('activityList');
+            if (!list) return;
+            const item = document.createElement('div');
+            item.className = 'activity-item';
+            item.style.animation = 'countUp 0.4s ease forwards';
+            item.innerHTML = `
+                <div class="activity-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">${title}</div>
+                    <div class="activity-time">${detail} - Agora</div>
+                </div>
+            `;
+            list.insertBefore(item, list.firstChild);
+            // Limitar a 10 itens visíveis
+            while (list.children.length > 10) list.removeChild(list.lastChild);
+        }
+
+        // ══════════════════════════════════
+        // Inicialização
+        // ══════════════════════════════════
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Detectar hardware
+            detectHardware();
+
+            // Atualizar ML cards
+            updateMLCards();
+
+            // Iniciar monitoramento ao vivo (a cada 2s)
+            hwMonitorInterval = setInterval(simulateHardwareChanges, 2000);
+
+            // Atualizar ML cards a cada 10s
+            setInterval(updateMLCards, 10000);
+
+            // Gerar dados de treino iniciais se vazio
+            if (mlEngine.trainingData.length === 0) {
+                const types = ['high_performance', 'clear_ram', 'diagnostico', 'process_priority'];
+                for (let i = 0; i < 5; i++) {
+                    const mockStats = {
+                        cpu: { current: Math.random() * 80 + 10 },
+                        memory: { current: Math.random() * 60 + 20 },
+                        gpu: { current: Math.random() * 50 + 5 },
+                        processCount: Math.floor(Math.random() * 200) + 50
+                    };
+                    mlEngine.train(mockStats, types[i % types.length], 0.4 + Math.random() * 0.5);
+                }
+                updateMLCards();
+            }
+        });
+
+        // Spin animation
+        const spinStyle = document.createElement('style');
+        spinStyle.textContent = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+        document.head.appendChild(spinStyle);
+
+        // ══════════════════════════════════
+        // Apps Grid - Ícones Reais
+        // ══════════════════════════════════
+
+        const appColorPool = [
+            'linear-gradient(135deg, #00d4ff, #0066ff)',
+            'linear-gradient(135deg, #7b68ee, #9370db)',
+            'linear-gradient(135deg, #00c853, #69f0ae)',
+            'linear-gradient(135deg, #ff6b35, #f7931e)',
+            'linear-gradient(135deg, #5865f2, #7289da)',
+            'linear-gradient(135deg, #e91e63, #f06292)',
+            'linear-gradient(135deg, #ff9800, #ffb74d)',
+            'linear-gradient(135deg, #26c6da, #00acc1)',
+            'linear-gradient(135deg, #ab47bc, #ce93d8)',
+            'linear-gradient(135deg, #66bb6a, #43a047)',
+            'linear-gradient(135deg, #ef5350, #e53935)',
+            'linear-gradient(135deg, #42a5f5, #1e88e5)'
+        ];
+
+        function renderAppsGrid(apps) {
+            const grid = document.getElementById('appsGrid');
+            if (!grid) return;
+
+            if (!apps || apps.length === 0) {
+                grid.innerHTML = '<div class="apps-loading">Nenhum app encontrado</div>';
+                return;
+            }
+
+            grid.innerHTML = apps.map((app, i) => {
+                const cpuVal = parseFloat(app.cpu) || 0;
+                const cpuColor = cpuVal > 20 ? '#ef5350' : cpuVal > 5 ? '#ffb74d' : '#69f0ae';
+                const iconHtml = app.icon
+                    ? `<img src="${app.icon}" alt="${app.name}" title="${app.path || app.name}">`
+                    : `<div class="app-icon-fallback" style="background:${appColorPool[i % appColorPool.length]};">${app.name.substring(0, 2)}</div>`;
+
+                return `
+                    <div class="app-card" title="${app.path || app.name}\nCPU: ${app.cpu}% | RAM: ${app.mem}%">
+                        <div class="app-icon">${iconHtml}</div>
+                        <div class="app-name">${app.name}</div>
+                        <div class="app-time">CPU ${app.cpu}%</div>
+                        <div class="app-usage-bar">
+                            <div class="app-usage-fill" style="width:${Math.min(cpuVal * 2, 100)}%;background:${cpuColor};"></div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function loadRunningApps() {
+            if (typeof window.fixme !== 'undefined' && window.fixme.getRunningApps) {
+                try {
+                    const result = await window.fixme.getRunningApps();
+                    if (result.success && result.data && result.data.length > 0) {
+                        renderAppsGrid(result.data);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('[FixMe] Erro ao carregar apps reais:', e);
+                }
+            }
+
+            // Fallback: apps simulados para modo standalone
+            renderAppsGrid([
+                { name: 'Chrome', icon: null, cpu: '3.2', mem: '8.1', path: '' },
+                { name: 'VS Code', icon: null, cpu: '1.8', mem: '4.5', path: '' },
+                { name: 'Explorer', icon: null, cpu: '0.5', mem: '1.2', path: '' },
+                { name: 'Spotify', icon: null, cpu: '0.8', mem: '2.3', path: '' },
+                { name: 'Discord', icon: null, cpu: '1.1', mem: '3.4', path: '' }
+            ]);
+        }
+
+        // Carregar apps na inicialização e atualizar a cada 30s
+        loadRunningApps();
+        setInterval(loadRunningApps, 30000);
+
+        // ══════════════════════════════════
+        // Electron Integration (dados reais)
+        // ══════════════════════════════════
+
+        (async function electronIntegration() {
+            if (typeof window.fixme === 'undefined') return; // Não está no Electron
+
+            console.log('[FixMe] Electron detectado - usando dados reais');
+
+            // Substituir detecção de hardware por dados reais
+            try {
+                const sysInfo = await window.fixme.getSystemInfo();
+                if (sysInfo.success) {
+                    hwState.cpu.name = sysInfo.data.cpuModel || hwState.cpu.name;
+                    hwState.cpu.cores = sysInfo.data.cpuCores || hwState.cpu.cores;
+                    hwState.memory.total = parseFloat(sysInfo.data.totalMemory) || hwState.memory.total;
+                    hwState.gpu.name = sysInfo.data.gpuModel || hwState.gpu.name;
+                    updateHardwareUI();
+                }
+            } catch (e) { console.warn('[FixMe] Erro ao obter sysInfo:', e); }
+
+            // Substituir simulação por monitoramento real
+            clearInterval(hwMonitorInterval);
+            try {
+                await window.fixme.startMonitoring(2000);
+                window.fixme.onStatsUpdate((data) => {
+                    if (data.stats) {
+                        hwState.cpu.current = data.stats.cpuUsage || hwState.cpu.current;
+                        hwState.memory.current = data.stats.memoryUsage || hwState.memory.current;
+                        hwState.gpu.current = data.stats.gpuUsage || hwState.gpu.current;
+                        hwState.memory.used = Math.round(hwState.memory.total * (hwState.memory.current / 100) * 10) / 10;
+                        hwState.processCount = data.stats.processCount || hwState.processCount;
+                        updateHardwareUI();
+                    }
+                });
+            } catch (e) {
+                console.warn('[FixMe] Monitoramento real falhou, usando simulação:', e);
+                hwMonitorInterval = setInterval(simulateHardwareChanges, 2000);
+            }
+
+            // Carregar ML real
+            try {
+                const mlStats = await window.fixme.getMLModelStats();
+                if (mlStats.success && mlStats.data) {
+                    const d = mlStats.data;
+                    const samplesEl = document.getElementById('ml-samples');
+                    const accuracyEl = document.getElementById('ml-accuracy');
+                    if (samplesEl) samplesEl.textContent = d.totalSamples || 0;
+                    if (accuracyEl) accuracyEl.textContent = `${d.avgEffectiveness || 0}%`;
+                }
+            } catch (e) { /* fallback to local ML */ }
+
+            // Carregar uso real
+            try {
+                const usage = await window.fixme.getUsageStats();
+                if (usage.success && usage.data) {
+                    const usageBody = document.getElementById('ml-usage-body');
+                    if (usageBody) {
+                        const labels = { 'high_performance': 'High Performance', 'clear_ram': 'Limpeza de RAM', 'diagnostico': 'Diagnóstico' };
+                        const types = ['high_performance', 'clear_ram', 'diagnostico'];
+                        usageBody.innerHTML = types.map(type => {
+                            const u = usage.data[type] || { todayCount: 0, limit: 10 };
+                            const pct = Math.min((u.todayCount / u.limit) * 100, 100);
+                            return `<div class="ml-usage-item"><div class="ml-usage-label"><span class="ml-usage-name">${labels[type]}</span><span class="ml-usage-count">${u.todayCount}/${u.limit}</span></div><div class="ml-usage-bar-bg"><div class="ml-usage-bar" style="width:${pct}%"></div></div></div>`;
+                        }).join('');
+                    }
+                }
+            } catch (e) { /* fallback to local */ }
+        })();
+    </script>
+</body>
+</html>

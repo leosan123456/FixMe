@@ -1,9 +1,12 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./database');
 
-const API_KEY = 'AIzaSyA50zA8UG_ts-Iy1K3drPxAndF39hXkuSY';
+const API_KEY = process.env.GEMINI_API_KEY;
+if (!API_KEY) {
+  throw new Error('GEMINI_API_KEY não definida. Crie um arquivo .env na raiz do projeto com a chave.');
+}
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 class AIOptimizer {
   constructor() {
