@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0e17"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="220" fill="url(#bg4)" rx="16"/>
+
+  <text x="30" y="30" fill="#6b7280" font-size="12" font-weight="600" letter-spacing="1">MACHINE LEARNING INSIGHTS</text>
+  <rect x="30" y="16" width="4" height="20" rx="2" fill="#a855f7"/>
+
+  <!-- Card 1: ML Prediction -->
+  <rect x="30" y="50" width="270" height="150" rx="14" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="58" cy="78" r="14" fill="#2d1b69"/>
+  <text x="52" y="82" fill="#a78bfa" font-size="10" font-weight="700">ML</text>
+  <text x="80" y="82" fill="#e8e8e8" font-size="12" font-weight="600">Predicao ML</text>
+
+  <rect x="46" y="100" width="100" height="20" rx="10" fill="#0d2818"/>
+  <circle cx="58" cy="110" r="4" fill="#00c853"/>
+  <text x="68" y="114" fill="#69f0ae" font-size="9" font-weight="500">Modelo pronto</text>
+
+  <text x="46" y="140" fill="#94a3b8" font-size="9">high_performance</text>
+  <rect x="46" y="146" width="200" height="4" rx="2" fill="#1e293b"/>
+  <rect x="46" y="146" width="156" height="4" rx="2" fill="#a78bfa"/>
+  <text x="260" y="153" fill="#a78bfa" font-size="10" font-weight="600" text-anchor="end">78%</text>
+
+  <text x="46" y="170" fill="#94a3b8" font-size="9">clear_ram</text>
+  <rect x="46" y="176" width="200" height="4" rx="2" fill="#1e293b"/>
+  <rect x="46" y="176" width="130" height="4" rx="2" fill="#60a5fa"/>
+  <text x="260" y="183" fill="#60a5fa" font-size="10" font-weight="600" text-anchor="end">65%</text>
+
+  <!-- Card 2: Model Status -->
+  <rect x="315" y="50" width="270" height="150" rx="14" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="343" cy="78" r="14" fill="#1a2744"/>
+  <text x="337" y="82" fill="#60a5fa" font-size="10" font-weight="700">ST</text>
+  <text x="365" y="82" fill="#e8e8e8" font-size="12" font-weight="600">Status do Modelo</text>
+
+  <text x="331" y="116" fill="#6b7280" font-size="11">Amostras:</text>
+  <text x="420" y="116" fill="white" font-size="14" font-weight="700">24</text>
+
+  <text x="331" y="142" fill="#6b7280" font-size="11">Efetividade:</text>
+  <text x="420" y="142" fill="#69f0ae" font-size="14" font-weight="700">72%</text>
+
+  <rect x="331" y="160" width="238" height="20" rx="10" fill="#0d2818"/>
+  <circle cx="345" cy="170" r="4" fill="#00c853"/>
+  <text x="355" y="174" fill="#69f0ae" font-size="9" font-weight="500">kNN ativo - k=3</text>
+
+  <!-- Card 3: Usage Profile -->
+  <rect x="600" y="50" width="270" height="150" rx="14" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="628" cy="78" r="14" fill="#0d2818"/>
+  <text x="622" y="82" fill="#69f0ae" font-size="10" font-weight="700">US</text>
+  <text x="650" y="82" fill="#e8e8e8" font-size="12" font-weight="600">Perfil de Uso</text>
+
+  <text x="616" y="112" fill="#94a3b8" font-size="9">High Performance</text>
+  <text x="840" y="112" fill="#94a3b8" font-size="9" text-anchor="end">3/10</text>
+  <rect x="616" y="118" width="238" height="4" rx="2" fill="#1e293b"/>
+  <rect x="616" y="118" width="71" height="4" rx="2" fill="#00d4ff"/>
+
+  <text x="616" y="142" fill="#94a3b8" font-size="9">Limpeza de RAM</text>
+  <text x="840" y="142" fill="#94a3b8" font-size="9" text-anchor="end">12/50</text>
+  <rect x="616" y="148" width="238" height="4" rx="2" fill="#1e293b"/>
+  <rect x="616" y="148" width="57" height="4" rx="2" fill="#a855f7"/>
+
+  <text x="616" y="172" fill="#94a3b8" font-size="9">Diagnostico</text>
+  <text x="840" y="172" fill="#94a3b8" font-size="9" text-anchor="end">5/20</text>
+  <rect x="616" y="178" width="238" height="4" rx="2" fill="#1e293b"/>
+  <rect x="616" y="178" width="60" height="4" rx="2" fill="#f59e0b"/>
+</svg>

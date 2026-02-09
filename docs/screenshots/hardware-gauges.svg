@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0e17"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="280" fill="url(#bg2)" rx="16"/>
+
+  <text x="30" y="30" fill="#6b7280" font-size="12" font-weight="600" letter-spacing="1">HARDWARE MONITORING</text>
+  <rect x="30" y="16" width="4" height="20" rx="2" fill="#00d4ff"/>
+
+  <!-- Live Badge -->
+  <rect x="220" y="12" width="60" height="20" rx="10" fill="#00c853" opacity="0.15"/>
+  <circle cx="234" cy="22" r="3" fill="#00c853"/>
+  <text x="242" y="26" fill="#69f0ae" font-size="9" font-weight="600">LIVE</text>
+
+  <!-- CPU Gauge -->
+  <rect x="30" y="50" width="270" height="210" rx="16" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="105" cy="150" r="60" fill="none" stroke="#1e293b" stroke-width="8"/>
+  <circle cx="105" cy="150" r="60" fill="none" stroke="#00d4ff" stroke-width="8" stroke-dasharray="377" stroke-dashoffset="113" stroke-linecap="round" transform="rotate(-90 105 150)"/>
+  <text x="105" y="142" fill="white" font-size="32" font-weight="800" text-anchor="middle">42</text>
+  <text x="105" y="162" fill="#6b7280" font-size="12" text-anchor="middle">%</text>
+  <text x="190" y="120" fill="#e8e8e8" font-size="16" font-weight="600">CPU</text>
+  <text x="190" y="142" fill="#6b7280" font-size="11">Intel Core i7-10700</text>
+  <text x="190" y="162" fill="#6b7280" font-size="11">8 cores / 16 threads</text>
+  <rect x="190" y="178" width="90" height="5" rx="2.5" fill="#1e293b"/>
+  <rect x="190" y="178" width="38" height="5" rx="2.5" fill="#00d4ff"/>
+  <text x="190" y="202" fill="#334155" font-size="9">0%</text>
+  <text x="262" y="202" fill="#334155" font-size="9">100%</text>
+
+  <!-- RAM Gauge -->
+  <rect x="315" y="50" width="270" height="210" rx="16" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="390" cy="150" r="60" fill="none" stroke="#1e293b" stroke-width="8"/>
+  <circle cx="390" cy="150" r="60" fill="none" stroke="#a855f7" stroke-width="8" stroke-dasharray="377" stroke-dashoffset="75" stroke-linecap="round" transform="rotate(-90 390 150)"/>
+  <text x="390" y="142" fill="white" font-size="32" font-weight="800" text-anchor="middle">68</text>
+  <text x="390" y="162" fill="#6b7280" font-size="12" text-anchor="middle">%</text>
+  <text x="475" y="120" fill="#e8e8e8" font-size="16" font-weight="600">Memoria</text>
+  <text x="475" y="142" fill="#6b7280" font-size="11">16 GB DDR4</text>
+  <text x="475" y="162" fill="#6b7280" font-size="11">10.9 / 16.0 GB</text>
+  <rect x="475" y="178" width="90" height="5" rx="2.5" fill="#1e293b"/>
+  <rect x="475" y="178" width="61" height="5" rx="2.5" fill="#a855f7"/>
+  <text x="475" y="202" fill="#334155" font-size="9">0%</text>
+  <text x="547" y="202" fill="#334155" font-size="9">100%</text>
+
+  <!-- GPU Gauge -->
+  <rect x="600" y="50" width="270" height="210" rx="16" fill="#111827" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="675" cy="150" r="60" fill="none" stroke="#1e293b" stroke-width="8"/>
+  <circle cx="675" cy="150" r="60" fill="none" stroke="#f59e0b" stroke-width="8" stroke-dasharray="377" stroke-dashoffset="283" stroke-linecap="round" transform="rotate(-90 675 150)"/>
+  <text x="675" y="142" fill="white" font-size="32" font-weight="800" text-anchor="middle">25</text>
+  <text x="675" y="162" fill="#6b7280" font-size="12" text-anchor="middle">%</text>
+  <text x="760" y="120" fill="#e8e8e8" font-size="16" font-weight="600">GPU</text>
+  <text x="760" y="142" fill="#6b7280" font-size="11">NVIDIA RTX 3060</text>
+  <text x="760" y="162" fill="#6b7280" font-size="11">6 GB VRAM</text>
+  <rect x="760" y="178" width="90" height="5" rx="2.5" fill="#1e293b"/>
+  <rect x="760" y="178" width="23" height="5" rx="2.5" fill="#f59e0b"/>
+  <text x="760" y="202" fill="#334155" font-size="9">0%</text>
+  <text x="832" y="202" fill="#334155" font-size="9">100%</text>
+</svg>
