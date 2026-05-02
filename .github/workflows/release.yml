@@ -1,0 +1,74 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build installer (NSIS .exe)
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GEMINI_API_KEY is intentionally not set at build time.
+          # Users configure it post-install via %APPDATA%\FixMe\.env
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FixMe-Windows-Installer
+          path: dist/*.exe
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: FixMe ${{ github.ref_name }}
+          body: |
+            ## FixMe ${{ github.ref_name }}
+
+            ### Instalação rápida (PowerShell)
+            ```powershell
+            irm https://raw.githubusercontent.com/leosan123456/FixMe/main/install.ps1 | iex
+            ```
+
+            ### Instalação manual
+            Baixe o arquivo `.exe` abaixo e execute como administrador.
+
+            ### Configuração da IA (opcional)
+            Para usar as funcionalidades Gemini AI, crie o arquivo:
+            ```
+            %APPDATA%\FixMe\.env
+            ```
+            Com o conteúdo:
+            ```
+            GEMINI_API_KEY=sua_chave_aqui
+            ```
+          files: dist/*.exe
+          draft: false
+          prerelease: false

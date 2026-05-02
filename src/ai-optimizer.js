@@ -1,17 +1,19 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./database');
 
-const API_KEY = process.env.GEMINI_API_KEY;
-if (!API_KEY) {
-  throw new Error('GEMINI_API_KEY não definida. Crie um arquivo .env na raiz do projeto com a chave.');
-}
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
 class AIOptimizer {
   constructor() {
     this.conversationHistory = [];
     this.systemPrompt = this.buildSystemPrompt();
+    this._model = null;
+  }
+
+  _getModel() {
+    if (this._model) return this._model;
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error('GEMINI_API_KEY não definida. Crie um arquivo .env com sua chave Gemini.');
+    this._model = new GoogleGenerativeAI(key).getGenerativeModel({ model: 'gemini-2.0-flash' });
+    return this._model;
   }
 
   buildSystemPrompt() {
@@ -43,7 +45,7 @@ Formato de resposta:
         parts: [{ text: prompt }]
       });
 
-      const response = await model.generateContent({
+      const response = await this._getModel().generateContent({
         contents: this.conversationHistory
       });
 
@@ -67,7 +69,7 @@ Formato de resposta:
   }
 
   buildPromptForRecommendations(hwStats, hwProfile, history) {
-    const lastOptimizations = history.slice(-5);
+    const lastOptimizations = (history || []).slice(-5);
     const successRate = db.getSuccessRate();
 
     return `Análise de Hardware e Recomendações Inteligentes:
@@ -127,7 +129,7 @@ Use isso para aprender qual tipo de otimização funciona melhor para este siste
         parts: [{ text: prompt }]
       });
 
-      const response = await model.generateContent({
+      const response = await this._getModel().generateContent({
         contents: this.conversationHistory
       });
 
@@ -157,7 +159,7 @@ Retorne em JSON format com configurações recomendadas e tweaks específicos pa
         parts: [{ text: prompt }]
       });
 
-      const response = await model.generateContent({
+      const response = await this._getModel().generateContent({
         contents: this.conversationHistory
       });
 

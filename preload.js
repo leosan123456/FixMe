@@ -43,5 +43,37 @@ contextBridge.exposeInMainWorld('fixme', {
   getUsageStats: () => ipcRenderer.invoke('req:get-usage'),
 
   // Event listeners
-  onStatsUpdate: (callback) => ipcRenderer.on('hw:stats-update', (_, data) => callback(data))
+  onStatsUpdate: (callback) => ipcRenderer.on('hw:stats-update', (_, data) => callback(data)),
+
+  // Win Optimizer
+  winOptVisualEffects: (enable) => ipcRenderer.invoke('winopt:visual-effects', enable),
+  winOptDisableServices: () => ipcRenderer.invoke('winopt:disable-services'),
+  winOptDisableTelemetry: () => ipcRenderer.invoke('winopt:disable-telemetry'),
+  winOptPowerPlan: (revert) => ipcRenderer.invoke('winopt:power-plan', revert),
+  winOptNetwork: () => ipcRenderer.invoke('winopt:network'),
+  winOptScheduler: () => ipcRenderer.invoke('winopt:scheduler'),
+  winOptRemovePolicies: () => ipcRenderer.invoke('winopt:remove-policies'),
+  winOptGPU: () => ipcRenderer.invoke('winopt:optimize-gpu'),
+  winOptMemory: () => ipcRenderer.invoke('winopt:optimize-memory'),
+  winOptKillBackground: () => ipcRenderer.invoke('winopt:kill-background'),
+  winOptGetKillCandidates: () => ipcRenderer.invoke('winopt:get-kill-candidates'),
+  winOptBoostGame: (processName) => ipcRenderer.invoke('winopt:boost-game', processName),
+  winOptFullBundle: (options) => ipcRenderer.invoke('winopt:full-optimization', options),
+
+  // Local ML Hub (5 modelos 100% locais)
+  localMLGetStats:      ()               => ipcRenderer.invoke('localml:get-stats'),
+  localMLPredict:       (trends)         => ipcRenderer.invoke('localml:predict', trends),
+  localMLTick:          ()               => ipcRenderer.invoke('localml:tick'),
+  localMLRecordOutcome: (type, before, after, rating) => ipcRenderer.invoke('localml:record-outcome', type, before, after, rating),
+  localMLTrainSession:  (label)          => ipcRenderer.invoke('localml:train-session', label),
+
+  // Deep AI
+  deepAIAnalyze: (userContext) => ipcRenderer.invoke('deepai:analyze', userContext),
+  deepAIRefine: (question) => ipcRenderer.invoke('deepai:refine', question),
+  deepAIBottleneck: (type) => ipcRenderer.invoke('deepai:bottleneck', type),
+  deepAIAnalyzeProcesses: () => ipcRenderer.invoke('deepai:analyze-processes'),
+  deepAIRecordPattern: () => ipcRenderer.invoke('deepai:record-pattern'),
+  deepAILearnOutcome: (id, before, after, rating) => ipcRenderer.invoke('deepai:learn-outcome', id, before, after, rating),
+  deepAISessionSummary: () => ipcRenderer.invoke('deepai:session-summary'),
+  deepAIClearSession: () => ipcRenderer.invoke('deepai:clear-session')
 });

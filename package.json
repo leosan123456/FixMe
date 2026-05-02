@@ -1,22 +1,96 @@
 {
   "name": "fixme",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "FixMe - Windows optimization tool for games",
   "main": "main.js",
   "scripts": {
     "start": "node launch.js",
     "dev": "node launch.js",
+    "test": "node test-runner.js",
+    "test:unit": "node test-modules.js",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "release": "electron-builder --publish always"
   },
   "keywords": [
     "windows",
     "optimization",
     "games",
-    "fixme"
+    "fixme",
+    "performance"
   ],
-  "author": "",
+  "author": {
+    "name": "leosan123456",
+    "email": "leo.santarelli120@gmail.com",
+    "url": "https://github.com/leosan123456"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leosan123456/FixMe.git"
+  },
+  "homepage": "https://github.com/leosan123456/FixMe#readme",
+  "bugs": {
+    "url": "https://github.com/leosan123456/FixMe/issues"
+  },
+  "build": {
+    "appId": "com.fixme.app",
+    "productName": "FixMe",
+    "copyright": "Copyright © 2025 FixMe",
+    "files": [
+      "main.js",
+      "preload.js",
+      "launch.js",
+      "dashboard.html",
+      "src/**/*",
+      "node_modules/**/*",
+      "!node_modules/.cache/**/*",
+      "!**/*.map",
+      "!test*.js",
+      "!*.md",
+      "!.env"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "requestedExecutionLevel": "requireAdministrator",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FixMe",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "menuCategory": "FixMe",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": ".env.example",
+        "to": ".env.example"
+      }
+    ],
+    "compression": "maximum",
+    "publish": {
+      "provider": "github",
+      "owner": "leosan123456",
+      "repo": "FixMe"
+    }
+  },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "chart.js": "^3.9.1",

@@ -78,7 +78,7 @@ class SuggestionsEngine {
     }
 
     // Análise de processos pesados
-    const heavyProcesses = stats.topCpuProcesses.filter(p => parseFloat(p.cpu) > 20);
+    const heavyProcesses = (stats.topCpuProcesses || []).filter(p => parseFloat(p.cpu) > 20);
     if (heavyProcesses.length > 0) {
       const processList = heavyProcesses.map(p => p.name).join(', ');
       suggestions.push({

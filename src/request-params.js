@@ -13,11 +13,12 @@ class RequestParams {
   constructor() {
     // Cooldowns em milissegundos
     this.cooldowns = {
-      'high_performance': 300000,   // 5 min
-      'clear_ram': 60000,           // 1 min
-      'process_priority': 30000,    // 30 s
-      'game_optimization': 120000,  // 2 min
-      'diagnostico': 180000         // 3 min
+      'high_performance': 300000,    // 5 min
+      'clear_ram': 60000,            // 1 min
+      'process_priority': 30000,     // 30 s
+      'game_optimization': 120000,   // 2 min
+      'diagnostico': 180000,         // 3 min
+      'full_optimization': 600000    // 10 min
     };
 
     // Máximo de execuções por dia por tipo
@@ -26,7 +27,8 @@ class RequestParams {
       'clear_ram': 50,
       'process_priority': 20,
       'game_optimization': 10,
-      'diagnostico': 20
+      'diagnostico': 20,
+      'full_optimization': 5
     };
   }
 

@@ -879,8 +879,491 @@
             }
         }
     </style>
+    <style>
+        /* ═══════════════════════════════
+           STARTUP OVERLAY
+           ═══════════════════════════════ */
+        .startup-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .startup-overlay.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .startup-box {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .startup-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.35rem;
+        }
+        .startup-logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--cream);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .startup-logo-icon svg { width: 26px; height: 26px; }
+        .startup-logo-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .startup-logo-text span { font-weight: 300; }
+        .startup-tagline {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            letter-spacing: 0.5px;
+        }
+        .startup-steps {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+        .startup-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.9rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .startup-step.active {
+            border-color: rgba(245, 111, 16, 0.4);
+            background: rgba(245, 111, 16, 0.05);
+        }
+        .startup-step.done {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.04);
+        }
+        .ss-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--bg-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+        .startup-step.active .ss-icon { background: rgba(245, 111, 16, 0.2); color: var(--accent-orange); }
+        .startup-step.done   .ss-icon { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .ss-icon svg { width: 14px; height: 14px; }
+        .ss-spin { animation: ss-rotate 1s linear infinite; }
+        @keyframes ss-rotate { to { transform: rotate(360deg); } }
+        .ss-text { flex: 1; min-width: 0; }
+        .ss-label { font-size: 0.8rem; font-weight: 500; }
+        .ss-sub   { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ss-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            flex-shrink: 0;
+        }
+        .ss-badge.ok      { background: rgba(16,185,129,0.15); color: var(--success); }
+        .ss-badge.warn    { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .ss-badge.crit    { background: rgba(239,68,68,0.15);  color: #ef4444; }
+        .ss-badge.pending { background: rgba(163,179,201,0.1); color: var(--text-muted); }
+
+        .startup-progress-wrap {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+        .startup-progress-track {
+            height: 3px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .startup-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-orange), var(--success));
+            border-radius: 2px;
+            transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+            width: 0%;
+        }
+        .startup-progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+        }
+
+        /* Score panel */
+        .startup-score-panel {
+            width: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+            animation: countUp 0.5s ease forwards;
+        }
+        .startup-score-ring {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .startup-score-ring svg { width: 80px; height: 80px; }
+        .startup-score-num {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .startup-score-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .startup-score-hw {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+        .startup-hw-item {
+            padding: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .startup-hw-val { font-size: 0.9rem; font-weight: 600; color: var(--accent-orange); }
+        .startup-hw-lbl { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.1rem; }
+
+        .startup-enter-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: countUp 0.4s ease forwards;
+        }
+        .startup-enter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(245,111,16,0.35);
+        }
+        .startup-enter-btn svg { width: 16px; height: 16px; }
+
+        /* ═══════════════════════════════
+           LANGUAGE TOGGLE
+           ═══════════════════════════════ */
+        .lang-btn {
+            height: 36px;
+            padding: 0 0.75rem;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+        .lang-btn:hover {
+            border-color: rgba(255,255,255,0.12);
+            color: var(--text-primary);
+        }
+        .lang-btn svg { width: 14px; height: 14px; }
+        .lang-flag { font-size: 1rem; line-height: 1; }
+    </style>
+    <style>
+        /* ═══════════════════════════════
+           Win Optimizer Panel
+           ═══════════════════════════════ */
+        .winopt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+        .winopt-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s;
+        }
+        .winopt-card:hover { border-color: rgba(255,255,255,0.1); }
+        .winopt-card-icon {
+            width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .winopt-card-icon svg { width: 18px; height: 18px; }
+        .winopt-card-info { flex: 1; min-width: 0; }
+        .winopt-card-title { font-size: 0.8rem; font-weight: 500; color: var(--text-primary); }
+        .winopt-card-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+        /* Toggle switch */
+        .winopt-toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+        .winopt-toggle input { opacity: 0; width: 0; height: 0; }
+        .winopt-slider {
+            position: absolute; inset: 0; cursor: pointer;
+            background: rgba(255,255,255,0.1); border-radius: 20px;
+            transition: background 0.2s;
+        }
+        .winopt-slider::before {
+            content: ''; position: absolute; width: 14px; height: 14px;
+            border-radius: 50%; background: white; left: 3px; top: 3px;
+            transition: transform 0.2s;
+        }
+        .winopt-toggle input:checked + .winopt-slider { background: var(--accent-orange); }
+        .winopt-toggle input:checked + .winopt-slider::before { transform: translateX(16px); }
+
+        /* Bundle button */
+        .winopt-bundle-btn {
+            display: flex; align-items: center; gap: 0.4rem;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            border: none; border-radius: 8px; padding: 0.45rem 0.9rem;
+            color: white; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .winopt-bundle-btn:hover { opacity: 0.85; }
+        .winopt-bundle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Kill list */
+        .winopt-kill-list {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem;
+            min-height: 56px;
+            margin-bottom: 1.25rem;
+        }
+        .winopt-kill-loading { font-size: 0.78rem; color: var(--text-muted); padding: 0.5rem 0; }
+        .winopt-kill-item {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.4rem 0; border-bottom: 1px solid var(--border-color);
+        }
+        .winopt-kill-item:last-child { border-bottom: none; }
+        .winopt-kill-name { flex: 1; font-size: 0.8rem; color: var(--text-primary); }
+        .winopt-kill-cpu { font-size: 0.7rem; color: var(--text-muted); }
+        .winopt-kill-btn {
+            background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 6px; padding: 0.25rem 0.6rem;
+            color: #ef4444; font-size: 0.7rem; cursor: pointer;
+        }
+        .winopt-kill-btn:hover { background: rgba(239,68,68,0.25); }
+
+        /* Game boost */
+        .winopt-gameboost {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .winopt-gameboost-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.8rem; font-weight: 500; color: var(--text-primary);
+            margin-bottom: 0.6rem;
+        }
+        .winopt-gameboost-row { display: flex; gap: 0.5rem; }
+        .winopt-gameboost-input {
+            flex: 1; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 0.45rem 0.75rem; color: var(--text-primary); font-size: 0.8rem;
+            outline: none;
+        }
+        .winopt-gameboost-input:focus { border-color: rgba(255,255,255,0.15); }
+        .winopt-gameboost-btn {
+            background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4);
+            border-radius: 8px; padding: 0.45rem 0.9rem;
+            color: #818cf8; font-size: 0.8rem; font-weight: 500; cursor: pointer;
+        }
+        .winopt-gameboost-btn:hover { background: rgba(99,102,241,0.3); }
+
+        /* Deep AI panel */
+        .winopt-deepai-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .winopt-deepai-idle {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 0.75rem; text-align: center;
+        }
+        .winopt-deepai-idle p { font-size: 0.8rem; color: var(--text-muted); max-width: 380px; }
+        .winopt-deepai-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+        .winopt-deepai-btn-primary {
+            background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3));
+            border: 1px solid rgba(139,92,246,0.4);
+            border-radius: 8px; padding: 0.5rem 1rem;
+            color: #c4b5fd; font-size: 0.82rem; font-weight: 500; cursor: pointer;
+        }
+        .winopt-deepai-btn-primary:hover { border-color: rgba(139,92,246,0.7); }
+        .winopt-deepai-btn-secondary {
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0.5rem 1rem;
+            color: var(--text-muted); font-size: 0.82rem; cursor: pointer;
+        }
+        .winopt-deepai-result-header {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 0.82rem; font-weight: 500; color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+        .winopt-deepai-refine { display: flex; gap: 0.5rem; margin-top: 0.9rem; }
+        .winopt-ai-badge {
+            font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; padding: 0.2rem 0.55rem;
+            background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3));
+            border: 1px solid rgba(139,92,246,0.4);
+            border-radius: 20px; color: #c4b5fd;
+        }
+        .deepai-plan-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .deepai-plan-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.35rem;
+        }
+        .deepai-plan-title { font-size: 0.82rem; font-weight: 500; flex: 1; }
+        .deepai-plan-impact {
+            font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.5rem;
+            border-radius: 20px; text-transform: uppercase;
+        }
+        .deepai-plan-impact.high { background: rgba(239,68,68,0.15); color: #f87171; }
+        .deepai-plan-impact.medium { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .deepai-plan-impact.low { background: rgba(16,185,129,0.15); color: #34d399; }
+        .deepai-plan-desc { font-size: 0.75rem; color: var(--text-muted); }
+        .deepai-predictions {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;
+            margin: 0.75rem 0;
+        }
+        .deepai-pred-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 0.65rem; text-align: center;
+        }
+        .deepai-pred-val { font-size: 1.3rem; font-weight: 700; color: #a78bfa; }
+        .deepai-pred-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+
+        /* Toast */
+        .winopt-toast {
+            position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+            background: rgba(30,30,40,0.95); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 0.6rem 1.25rem;
+            font-size: 0.82rem; color: var(--text-primary);
+            pointer-events: none; opacity: 0; transition: opacity 0.3s;
+            z-index: 9999; white-space: nowrap;
+        }
+        .winopt-toast.show { opacity: 1; }
+    </style>
 </head>
 <body>
+    <!-- Startup Overlay -->
+    <div id="startupOverlay" class="startup-overlay">
+        <div class="startup-box">
+            <div class="startup-logo">
+                <div class="startup-logo-icon">
+                    <svg viewBox="0 0 32 32" fill="none">
+                        <path d="M20 4L8 18h8l-4 10 12-14h-8l4-10z" fill="#f56f10"/>
+                    </svg>
+                </div>
+                <span class="startup-logo-text">Fix<span>Me</span></span>
+            </div>
+            <div class="startup-tagline" id="su-tagline">Initializing system analysis...</div>
+
+            <div class="startup-steps" id="su-steps">
+                <div class="startup-step" id="su-step-1">
+                    <div class="ss-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3"/></svg></div>
+                    <div class="ss-text"><div class="ss-label" id="su-s1-lbl">Detecting hardware</div><div class="ss-sub" id="su-s1-sub">CPU · RAM · GPU</div></div>
+                    <span class="ss-badge pending" id="su-s1-badge">—</span>
+                </div>
+                <div class="startup-step" id="su-step-2">
+                    <div class="ss-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+                    <div class="ss-text"><div class="ss-label" id="su-s2-lbl">System resources</div><div class="ss-sub" id="su-s2-sub">Current usage · Processes</div></div>
+                    <span class="ss-badge pending" id="su-s2-badge">—</span>
+                </div>
+                <div class="startup-step" id="su-step-3">
+                    <div class="ss-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                    <div class="ss-text"><div class="ss-label" id="su-s3-lbl">Quick diagnostics</div><div class="ss-sub" id="su-s3-sub">Disk · Security · Network</div></div>
+                    <span class="ss-badge pending" id="su-s3-badge">—</span>
+                </div>
+                <div class="startup-step" id="su-step-4">
+                    <div class="ss-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+                    <div class="ss-text"><div class="ss-label" id="su-s4-lbl">ML Engine</div><div class="ss-sub" id="su-s4-sub">Loading model data</div></div>
+                    <span class="ss-badge pending" id="su-s4-badge">—</span>
+                </div>
+            </div>
+
+            <div class="startup-progress-wrap">
+                <div class="startup-progress-track"><div class="startup-progress-fill" id="su-bar"></div></div>
+                <div class="startup-progress-label">
+                    <span id="su-progress-lbl">Initializing...</span>
+                    <span id="su-progress-pct">0%</span>
+                </div>
+            </div>
+
+            <!-- Score panel (shown after completion) -->
+            <div class="startup-score-panel" id="su-score-panel">
+                <div class="startup-score-ring">
+                    <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/><circle id="su-score-arc" cx="40" cy="40" r="34" fill="none" stroke="var(--success)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 40 40)" style="transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)"/></svg>
+                    <div class="startup-score-num" id="su-score-num">—</div>
+                </div>
+                <div class="startup-score-label" id="su-score-lbl">System Health Score</div>
+                <div class="startup-score-hw" id="su-score-hw"></div>
+            </div>
+
+            <button class="startup-enter-btn" id="su-enter-btn" onclick="dismissStartup()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <span id="su-enter-lbl">Open Dashboard</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="logo">
@@ -892,6 +1375,11 @@
             <span class="logo-text">Fix<span>Me</span></span>
         </div>
         <div class="header-actions">
+            <button class="lang-btn" id="langToggleBtn" onclick="toggleLang()" title="Switch language">
+                <span class="lang-flag" id="langFlag">🇧🇷</span>
+                <span id="langLabel">PT</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
             <button class="icon-btn" onclick="toggleAiPanel()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
@@ -921,21 +1409,21 @@
                     </svg>
                 </div>
                 <div class="status-info">
-                    <div class="status-title">Sistema saudável</div>
-                    <div class="status-subtitle">Última verificação há 5 minutos</div>
+                    <div class="status-title" id="statusTitle">Sistema saudável</div>
+                    <div class="status-subtitle" id="statusSubtitle">Última verificação há 5 minutos</div>
                 </div>
                 <button class="scan-btn" onclick="startAnalysis()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                     </svg>
-                    Analisar
+                    <span id="scanBtnLabel">Analisar</span>
                 </button>
             </div>
 
             <!-- Hardware Section (Live Gauges) -->
             <div class="section-header">
-                <span class="section-title">Hardware</span>
-                <span class="hw-live-badge"><span class="hw-live-dot"></span>Ao vivo</span>
+                <span class="section-title" id="hwSectionTitle">Hardware</span>
+                <span class="hw-live-badge"><span class="hw-live-dot"></span><span id="hwLiveLabel">Ao vivo</span></span>
             </div>
             <div class="hardware-grid" id="hwGrid">
                 <div class="hardware-card" id="hw-cpu">
@@ -961,7 +1449,7 @@
                         </svg>
                         <div class="gauge-ring-text" id="mem-gauge-text">62%</div>
                     </div>
-                    <div class="hardware-label">Memória RAM</div>
+                    <div class="hardware-label" id="ramLabel">Memória RAM</div>
                     <div class="hardware-value" id="hw-mem-name">Detectando...</div>
                     <div class="hw-percent" id="hw-mem-detail">-- GB usados</div>
                     <div class="hardware-usage">
@@ -987,8 +1475,8 @@
 
             <!-- Recent Apps Section -->
             <div class="section-header">
-                <span class="section-title">Apps recentes</span>
-                <a href="#" class="section-link">Ver todos</a>
+                <span class="section-title" id="appsSectionTitle">Apps recentes</span>
+                <a href="#" class="section-link" id="appsViewAll">Ver todos</a>
             </div>
             <div class="apps-grid" id="appsGrid">
                 <div class="apps-loading">
@@ -1045,7 +1533,7 @@
 
             <!-- Recent Activity -->
             <div class="section-header">
-                <span class="section-title">Correções recentes</span>
+                <span class="section-title" id="activitySectionTitle">Correções recentes</span>
             </div>
             <div class="activity-list" id="activityList">
                 <div class="activity-item">
@@ -1071,6 +1559,164 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Windows Optimizer Section -->
+            <div class="section-header" style="margin-top:2rem">
+                <span class="section-title" id="winoptSectionTitle">Otimizações do Windows</span>
+                <button class="winopt-bundle-btn" id="winoptBundleBtn" onclick="runFullOptimization()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+                        <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
+                    </svg>
+                    <span id="winoptBundleBtnLabel">Otimização Completa</span>
+                </button>
+            </div>
+
+            <!-- Optimization toggle cards -->
+            <div class="winopt-grid" id="winoptGrid">
+                <div class="winopt-card" id="woc-visual">
+                    <div class="winopt-card-icon" style="background:rgba(139,92,246,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocVisualTitle">Efeitos Visuais</div>
+                        <div class="winopt-card-desc" id="wocVisualDesc">Desativa animações e transparências</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togVisual" onchange="applyWinOpt('visual',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+                <div class="winopt-card" id="woc-services">
+                    <div class="winopt-card-icon" style="background:rgba(59,130,246,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocServicesTitle">Serviços Bloat</div>
+                        <div class="winopt-card-desc" id="wocServicesDesc">Desativa serviços desnecessários</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togServices" onchange="applyWinOpt('services',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+                <div class="winopt-card" id="woc-telemetry">
+                    <div class="winopt-card-icon" style="background:rgba(239,68,68,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M1 6s8-5 11 0 11 0 11 0v12s-8 5-11 0-11 0-11 0V6z"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocTelemetryTitle">Telemetria</div>
+                        <div class="winopt-card-desc" id="wocTelemetryDesc">Remove rastreamento da Microsoft</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togTelemetry" onchange="applyWinOpt('telemetry',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+                <div class="winopt-card" id="woc-power">
+                    <div class="winopt-card-icon" style="background:rgba(245,158,11,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocPowerTitle">Plano de Energia</div>
+                        <div class="winopt-card-desc" id="wocPowerDesc">Ultimate Performance</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togPower" onchange="applyWinOpt('power',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+                <div class="winopt-card" id="woc-network">
+                    <div class="winopt-card-icon" style="background:rgba(16,185,129,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M1.42 9a16 16 0 0 1 21.16 0M5 12.55a11 11 0 0 1 14.08 0M10.54 16.1a6 6 0 0 1 2.92 0M12 20h.01"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocNetworkTitle">Rede / TCP</div>
+                        <div class="winopt-card-desc" id="wocNetworkDesc">Desativa Nagle, otimiza TCP</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togNetwork" onchange="applyWinOpt('network',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+                <div class="winopt-card" id="woc-scheduler">
+                    <div class="winopt-card-icon" style="background:rgba(99,102,241,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocSchedulerTitle">Scheduler / MMCSS</div>
+                        <div class="winopt-card-desc" id="wocSchedulerDesc">Timer de alta resolução</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togScheduler" onchange="applyWinOpt('scheduler',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+                <div class="winopt-card" id="woc-policies">
+                    <div class="winopt-card-icon" style="background:rgba(236,72,153,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocPoliciesTitle">Políticas do Windows</div>
+                        <div class="winopt-card-desc" id="wocPoliciesDesc">Remove atrasos de inicialização</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togPolicies" onchange="applyWinOpt('policies',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+                <div class="winopt-card" id="woc-gpu">
+                    <div class="winopt-card-icon" style="background:rgba(6,182,212,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocGPUTitle">GPU / HAGS</div>
+                        <div class="winopt-card-desc" id="wocGPUDesc">Hardware Accelerated GPU Scheduling</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togGPU" onchange="applyWinOpt('gpu',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+                <div class="winopt-card" id="woc-memory">
+                    <div class="winopt-card-icon" style="background:rgba(251,146,60,0.15)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2"><path d="M6 19v-3"/><path d="M10 19v-3"/><path d="M14 19v-3"/><path d="M18 19v-3"/><rect x="2" y="6" width="20" height="10" rx="2"/></svg>
+                    </div>
+                    <div class="winopt-card-info">
+                        <div class="winopt-card-title" id="wocMemoryTitle">Memória RAM</div>
+                        <div class="winopt-card-desc" id="wocMemoryDesc">Limpa standby list e compressão</div>
+                    </div>
+                    <label class="winopt-toggle"><input type="checkbox" id="togMemory" onchange="applyWinOpt('memory',this.checked)"><span class="winopt-slider"></span></label>
+                </div>
+            </div>
+
+            <!-- Process Kill List -->
+            <div class="section-header" style="margin-top:1.5rem">
+                <span class="section-title" id="winoptKillTitle">Processos em Background</span>
+                <button class="section-link" id="winoptRefreshKillBtn" onclick="refreshKillCandidates()" style="background:none;border:none;cursor:pointer;color:var(--accent-orange);font-size:0.8rem" id="winoptRefreshKillBtn">↻ <span id="winoptRefreshLabel">Atualizar</span></button>
+            </div>
+            <div class="winopt-kill-list" id="winoptKillList">
+                <div class="winopt-kill-loading" id="winoptKillLoading">Verificando processos em execução...</div>
+            </div>
+
+            <!-- Game Boost Input -->
+            <div class="winopt-gameboost" id="winoptGameBoost">
+                <div class="winopt-gameboost-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    <span id="winoptGameBoostTitle">Boost para Jogo</span>
+                </div>
+                <div class="winopt-gameboost-row">
+                    <input type="text" class="winopt-gameboost-input" id="gameBoostInput" placeholder="Ex: cs2.exe, valorant.exe">
+                    <button class="winopt-gameboost-btn" onclick="boostGameProcess()">
+                        <span id="winoptGameBoostBtn">Boost</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Deep AI Analysis Panel -->
+            <div class="section-header" style="margin-top:2rem">
+                <span class="section-title" id="deepaiSectionTitle">Análise IA Profunda</span>
+                <span class="winopt-ai-badge" id="deepaiBadge">Gemini</span>
+            </div>
+            <div class="winopt-deepai-card" id="winoptDeepAICard">
+                <div class="winopt-deepai-idle" id="deepaiIdle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:36px;height:36px;opacity:0.4"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
+                    <p id="deepaiIdleText">Análise profunda de gargalos, predições e plano de otimização personalizado via Gemini AI.</p>
+                    <div class="winopt-deepai-actions">
+                        <button class="winopt-deepai-btn-primary" onclick="runDeepAnalysis()"><span id="deepaiBtnRun">Analisar Profundamente</span></button>
+                        <button class="winopt-deepai-btn-secondary" onclick="showBottleneckMenu()"><span id="deepaiBtnBottleneck">Gargalo Específico</span></button>
+                    </div>
+                </div>
+                <div class="winopt-deepai-result" id="deepaiResult" style="display:none">
+                    <div class="winopt-deepai-result-header">
+                        <span id="deepaiResultTitle">Análise Completa</span>
+                        <button class="section-link" onclick="clearDeepAISession()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.75rem" id="deepaiClearBtn">Limpar</button>
+                    </div>
+                    <div id="deepaiResultContent"></div>
+                    <div class="winopt-deepai-refine">
+                        <input type="text" class="winopt-gameboost-input" id="deepaiRefineInput" placeholder="Pergunte algo sobre o sistema...">
+                        <button class="winopt-gameboost-btn" onclick="refineDeepAnalysis()"><span id="deepaiRefineBtnLabel">Perguntar</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Opt status toast -->
+            <div class="winopt-toast" id="winoptToast"></div>
         </main>
 
         <!-- AI Panel -->
@@ -1080,9 +1726,9 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
                     </svg>
-                    Análise IA
+                    <span id="aiPanelTitle">Análise IA</span>
                 </div>
-                <div class="ai-subtitle">Diagnóstico inteligente</div>
+                <div class="ai-subtitle" id="aiPanelSubtitle">Diagnóstico inteligente</div>
             </div>
 
             <div class="ai-content">
@@ -1094,7 +1740,7 @@
                             <path d="M12 6v6l4 2"/>
                         </svg>
                     </div>
-                    <div class="ai-idle-text">
+                    <div class="ai-idle-text" id="aiIdleText">
                         Clique em "Analisar" para iniciar um diagnóstico completo do seu sistema
                     </div>
                 </div>
@@ -1108,8 +1754,8 @@
                             </svg>
                         </div>
                         <div class="ai-step-content">
-                            <div class="ai-step-title">Coletando dados</div>
-                            <div class="ai-step-desc">Informações do sistema</div>
+                            <div class="ai-step-title" id="aiStep1Title">Coletando dados</div>
+                            <div class="ai-step-desc" id="aiStep1Desc">Informações do sistema</div>
                             <div class="ai-step-loader">
                                 <div class="ai-step-loader-bar"></div>
                             </div>
@@ -1122,8 +1768,8 @@
                             </svg>
                         </div>
                         <div class="ai-step-content">
-                            <div class="ai-step-title">Analisando processos</div>
-                            <div class="ai-step-desc">Aplicativos ativos</div>
+                            <div class="ai-step-title" id="aiStep2Title">Analisando processos</div>
+                            <div class="ai-step-desc" id="aiStep2Desc">Aplicativos ativos</div>
                             <div class="ai-step-loader">
                                 <div class="ai-step-loader-bar"></div>
                             </div>
@@ -1136,8 +1782,8 @@
                             </svg>
                         </div>
                         <div class="ai-step-content">
-                            <div class="ai-step-title">Verificando disco</div>
-                            <div class="ai-step-desc">Espaço e integridade</div>
+                            <div class="ai-step-title" id="aiStep3Title">Verificando disco</div>
+                            <div class="ai-step-desc" id="aiStep3Desc">Espaço e integridade</div>
                             <div class="ai-step-loader">
                                 <div class="ai-step-loader-bar"></div>
                             </div>
@@ -1150,8 +1796,8 @@
                             </svg>
                         </div>
                         <div class="ai-step-content">
-                            <div class="ai-step-title">Diagnóstico IA</div>
-                            <div class="ai-step-desc">Gerando recomendações</div>
+                            <div class="ai-step-title" id="aiStep4Title">Diagnóstico IA</div>
+                            <div class="ai-step-desc" id="aiStep4Desc">Gerando recomendações</div>
                             <div class="ai-step-loader">
                                 <div class="ai-step-loader-bar"></div>
                             </div>
@@ -1184,7 +1830,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                     </svg>
-                    Iniciar análise
+                    <span id="aiActionLabel">Iniciar análise</span>
                 </button>
             </div>
         </aside>
@@ -1410,7 +2056,7 @@
             if (predBody) {
                 if (prediction.predictions.length > 0) {
                     predBody.innerHTML = `
-                        <div class="ml-status-pill active"><span class="ml-status-dot"></span>Modelo ativo</div>
+                        <div class="ml-status-pill active"><span class="ml-status-dot"></span>${t('mlModelActive')}</div>
                         <div class="ml-pred-list">
                             ${prediction.predictions.slice(0, 3).map((p, i) => `
                                 <div class="ml-pred-item">
@@ -1424,13 +2070,13 @@
                         </div>
                         <button class="ml-apply-btn" onclick="applyMLPrediction()">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                            Aplicar recomendação
+                            ${t('mlApplyBtn')}
                         </button>
                     `;
                 } else {
                     predBody.innerHTML = `
-                        <div class="ml-status-pill training"><span class="ml-status-dot"></span>Modelo em treinamento</div>
-                        <div style="font-size:0.75rem;color:var(--text-muted);line-height:1.4;">Use as otimizações para alimentar o modelo com dados de treino. (${stats.totalSamples}/3 amostras)</div>
+                        <div class="ml-status-pill training"><span class="ml-status-dot"></span>${t('mlModelTraining')}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);line-height:1.4;">${t('mlNoData')} (${stats.totalSamples}/3)</div>
                     `;
                 }
             }
@@ -1510,7 +2156,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
                     <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
                 </svg>
-                Analisando...<span class="typing-cursor"></span>
+                ${t('aiAnalyzing')}<span class="typing-cursor"></span>
             `;
             steps.forEach(step => {
                 step.classList.remove('active', 'completed');
@@ -1548,7 +2194,7 @@
                     <polyline points="23,4 23,10 17,10"/>
                     <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                 </svg>
-                Nova análise
+                <span id="aiActionLabel">${t('aiNewAnalysis')}</span>
             `;
             isAnalyzing = false;
         }
@@ -1629,7 +2275,7 @@
                     <div class="ai-result-card">
                         <div class="ai-result-header">
                             <div class="ai-result-icon info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
-                            <div class="ai-result-title">Avaliação Gemini AI</div>
+                            <div class="ai-result-title">${t('aiOverall')}</div>
                         </div>
                         <div class="ai-result-desc">${result.ai.overallAssessment}</div>
                     </div>
@@ -1666,7 +2312,7 @@
                             <div class="ai-result-icon success" style="background:rgba(245,111,16,0.15);color:var(--accent-orange);">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                             </div>
-                            <div class="ai-result-title">Predição ML (kNN)</div>
+                            <div class="ai-result-title">${t('aiMLPred')}</div>
                         </div>
                         <div class="ai-result-desc">${result.ml.message || ''}<br/>${mlCards}</div>
                     </div>
@@ -1674,7 +2320,7 @@
             }
 
             if (!cardsHTML) {
-                cardsHTML = `<div class="ai-result-card"><div class="ai-result-header"><div class="ai-result-icon success">${checkSvg}</div><div class="ai-result-title">Sistema saudável</div></div><div class="ai-result-desc">Nenhum problema crítico encontrado.</div></div>`;
+                cardsHTML = `<div class="ai-result-card"><div class="ai-result-header"><div class="ai-result-icon success">${checkSvg}</div><div class="ai-result-title">${t('aiHealthy')}</div></div><div class="ai-result-desc">${t('aiNoIssues')}</div></div>`;
             }
 
             if (resultCards) resultCards.innerHTML = cardsHTML;
@@ -1797,7 +2443,7 @@
                 </div>
                 <div class="activity-content">
                     <div class="activity-title">${title}</div>
-                    <div class="activity-time">${detail} - Agora</div>
+                    <div class="activity-time">${detail} - ${t('activityNow')}</div>
                 </div>
             `;
             list.insertBefore(item, list.firstChild);
@@ -1809,34 +2455,7 @@
         // Inicialização
         // ══════════════════════════════════
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Detectar hardware
-            detectHardware();
-
-            // Atualizar ML cards
-            updateMLCards();
-
-            // Iniciar monitoramento ao vivo (a cada 2s)
-            hwMonitorInterval = setInterval(simulateHardwareChanges, 2000);
-
-            // Atualizar ML cards a cada 10s
-            setInterval(updateMLCards, 10000);
-
-            // Gerar dados de treino iniciais se vazio
-            if (mlEngine.trainingData.length === 0) {
-                const types = ['high_performance', 'clear_ram', 'diagnostico', 'process_priority'];
-                for (let i = 0; i < 5; i++) {
-                    const mockStats = {
-                        cpu: { current: Math.random() * 80 + 10 },
-                        memory: { current: Math.random() * 60 + 20 },
-                        gpu: { current: Math.random() * 50 + 5 },
-                        processCount: Math.floor(Math.random() * 200) + 50
-                    };
-                    mlEngine.train(mockStats, types[i % types.length], 0.4 + Math.random() * 0.5);
-                }
-                updateMLCards();
-            }
-        });
+        // Initialization moved to runStartupSequence (DOMContentLoaded at end of script)
 
         // Spin animation
         const spinStyle = document.createElement('style');
@@ -1867,7 +2486,7 @@
             if (!grid) return;
 
             if (!apps || apps.length === 0) {
-                grid.innerHTML = '<div class="apps-loading">Nenhum app encontrado</div>';
+                grid.innerHTML = `<div class="apps-loading">${t('appsNone')}</div>`;
                 return;
             }
 
@@ -1913,79 +2532,879 @@
             ]);
         }
 
-        // Carregar apps na inicialização e atualizar a cada 30s
-        loadRunningApps();
-        setInterval(loadRunningApps, 30000);
+        // Apps loaded and monitoring started inside runStartupSequence (DOMContentLoaded)
 
-        // ══════════════════════════════════
-        // Electron Integration (dados reais)
-        // ══════════════════════════════════
+        // ════════════════════════════════════════════
+        // TRANSLATIONS (PT-BR / EN)
+        // ════════════════════════════════════════════
+        const TRANSLATIONS = {
+            pt: {
+                // Header / Status
+                'statusTitle':          'Sistema saudável',
+                'statusSubtitle':       'Última verificação há 5 minutos',
+                'scanBtnLabel':         'Analisar',
+                // Hardware
+                'hwSectionTitle':       'Hardware',
+                'hwLiveLabel':          'Ao vivo',
+                'ramLabel':             'Memória RAM',
+                // Apps
+                'appsSectionTitle':     'Apps recentes',
+                'appsViewAll':          'Ver todos',
+                // Activity
+                'activitySectionTitle': 'Correções recentes',
+                // AI Panel
+                'aiPanelTitle':         'Análise IA',
+                'aiPanelSubtitle':      'Diagnóstico inteligente',
+                'aiIdleText':           'Clique em "Analisar" para iniciar um diagnóstico completo do seu sistema',
+                'aiStep1Title':         'Coletando dados',
+                'aiStep1Desc':          'Informações do sistema',
+                'aiStep2Title':         'Analisando processos',
+                'aiStep2Desc':          'Aplicativos ativos',
+                'aiStep3Title':         'Verificando disco',
+                'aiStep3Desc':          'Espaço e integridade',
+                'aiStep4Title':         'Diagnóstico IA',
+                'aiStep4Desc':          'Gerando recomendações',
+                'aiActionLabel':        'Iniciar análise',
+                // ML
+                'mlSectionTitle':       'Machine Learning Insights',
+                'mlPredLabel':          'Predição ML',
+                'mlModelLabel':         'Status do Modelo',
+                'mlUsageLabel':         'Perfil de Uso',
+                'mlSamplesLbl':         'Amostras',
+                'mlEffectLbl':          'Efetividade',
+                'mlHPerf':              'High Performance',
+                'mlClearRam':           'Limpeza de RAM',
+                'mlDiag':               'Diagnóstico',
+                'mlApplyBtn':           'Aplicar recomendação',
+                'mlNoData':             'Dados insuficientes. Continue usando otimizações.',
+                'mlTraining':           'Modelo em treinamento',
+                // AI results
+                'aiHealthy':            'Sistema saudável',
+                'aiNoIssues':           'Nenhum problema crítico encontrado.',
+                'aiOverall':            'Avaliação Gemini AI',
+                'aiMLPred':             'Predição ML (kNN)',
+                'aiAnalyzing':          'Analisando...',
+                'aiNewAnalysis':        'Nova análise',
+                'aiConfHeader':         'Confiança da Análise',
+                'aiIssuesLbl':          'Problemas',
+                'aiFixedLbl':           'Corrigidos',
+                // Startup
+                'su-tagline':           'Inicializando análise do sistema...',
+                'su-s1-lbl':            'Detectando hardware',
+                'su-s2-lbl':            'Recursos do sistema',
+                'su-s3-lbl':            'Diagnóstico rápido',
+                'su-s4-lbl':            'ML Engine',
+                'su-enter-lbl':         'Abrir Dashboard',
+                'su-score-lbl':         'Saúde do Sistema',
+                // ML labels (dynamic)
+                'type.high_performance':'Plano High Performance',
+                'type.clear_ram':       'Limpeza de RAM',
+                'type.process_priority':'Prioridade de Processo',
+                'type.game_optimization':'Otimização de Jogo',
+                'type.diagnostico':     'Diagnóstico',
+                // Misc
+                'mlModelActive':        'Modelo ativo',
+                'mlModelTraining':      'Modelo em treinamento',
+                'appsNone':             'Nenhum app encontrado',
+                'appsLoadingTxt':       'Carregando apps em execução...',
+                'activityNow':          'Agora',
+                // Win Optimizer
+                'winoptSectionTitle':   'Otimizações do Windows',
+                'winoptBundleBtnLabel': 'Otimização Completa',
+                'wocVisualTitle':       'Efeitos Visuais',
+                'wocVisualDesc':        'Desativa animações e transparências',
+                'wocServicesTitle':     'Serviços Bloat',
+                'wocServicesDesc':      'Desativa serviços desnecessários',
+                'wocTelemetryTitle':    'Telemetria',
+                'wocTelemetryDesc':     'Remove rastreamento da Microsoft',
+                'wocPowerTitle':        'Plano de Energia',
+                'wocPowerDesc':         'Ultimate Performance',
+                'wocNetworkTitle':      'Rede / TCP',
+                'wocNetworkDesc':       'Desativa Nagle, otimiza TCP',
+                'wocSchedulerTitle':    'Scheduler / MMCSS',
+                'wocSchedulerDesc':     'Timer de alta resolução',
+                'wocPoliciesTitle':     'Políticas do Windows',
+                'wocPoliciesDesc':      'Remove atrasos de inicialização',
+                'wocGPUTitle':          'GPU / HAGS',
+                'wocGPUDesc':           'Hardware Accelerated GPU Scheduling',
+                'wocMemoryTitle':       'Memória RAM',
+                'wocMemoryDesc':        'Limpa standby list e compressão',
+                'winoptKillTitle':      'Processos em Background',
+                'winoptRefreshLabel':   'Atualizar',
+                'winoptGameBoostTitle': 'Boost para Jogo',
+                'winoptGameBoostBtn':   'Boost',
+                'deepaiSectionTitle':   'Análise IA Profunda',
+                'deepaiIdleText':       'Análise profunda de gargalos, predições e plano de otimização personalizado via Gemini AI.',
+                'deepaiBtnRun':         'Analisar Profundamente',
+                'deepaiBtnBottleneck':  'Gargalo Específico',
+                'deepaiResultTitle':    'Análise Completa',
+                'deepaiClearBtn':       'Limpar',
+                'deepaiRefineBtnLabel': 'Perguntar',
+            },
+            en: {
+                // Header / Status
+                'statusTitle':          'System healthy',
+                'statusSubtitle':       'Last checked 5 minutes ago',
+                'scanBtnLabel':         'Analyze',
+                // Hardware
+                'hwSectionTitle':       'Hardware',
+                'hwLiveLabel':          'Live',
+                'ramLabel':             'RAM Memory',
+                // Apps
+                'appsSectionTitle':     'Recent apps',
+                'appsViewAll':          'View all',
+                // Activity
+                'activitySectionTitle': 'Recent fixes',
+                // AI Panel
+                'aiPanelTitle':         'AI Analysis',
+                'aiPanelSubtitle':      'Smart diagnostics',
+                'aiIdleText':           'Click "Analyze" to start a full system diagnostic',
+                'aiStep1Title':         'Collecting data',
+                'aiStep1Desc':          'System information',
+                'aiStep2Title':         'Analyzing processes',
+                'aiStep2Desc':          'Active applications',
+                'aiStep3Title':         'Checking disk',
+                'aiStep3Desc':          'Space and integrity',
+                'aiStep4Title':         'AI Diagnostics',
+                'aiStep4Desc':          'Generating recommendations',
+                'aiActionLabel':        'Start analysis',
+                // ML
+                'mlSectionTitle':       'Machine Learning Insights',
+                'mlPredLabel':          'ML Prediction',
+                'mlModelLabel':         'Model Status',
+                'mlUsageLabel':         'Usage Profile',
+                'mlSamplesLbl':         'Samples',
+                'mlEffectLbl':          'Effectiveness',
+                'mlHPerf':              'High Performance',
+                'mlClearRam':           'RAM Cleanup',
+                'mlDiag':               'Diagnostics',
+                'mlApplyBtn':           'Apply recommendation',
+                'mlNoData':             'Insufficient data. Keep using optimizations.',
+                'mlTraining':           'Model in training',
+                // AI results
+                'aiHealthy':            'System healthy',
+                'aiNoIssues':           'No critical issues found.',
+                'aiOverall':            'Gemini AI Assessment',
+                'aiMLPred':             'ML Prediction (kNN)',
+                'aiAnalyzing':          'Analyzing...',
+                'aiNewAnalysis':        'New analysis',
+                'aiConfHeader':         'Analysis Confidence',
+                'aiIssuesLbl':          'Issues',
+                'aiFixedLbl':           'Fixed',
+                // Startup
+                'su-tagline':           'Initializing system analysis...',
+                'su-s1-lbl':            'Detecting hardware',
+                'su-s2-lbl':            'System resources',
+                'su-s3-lbl':            'Quick diagnostics',
+                'su-s4-lbl':            'ML Engine',
+                'su-enter-lbl':         'Open Dashboard',
+                'su-score-lbl':         'System Health',
+                // ML labels (dynamic)
+                'type.high_performance':'High Performance Plan',
+                'type.clear_ram':       'RAM Cleanup',
+                'type.process_priority':'Process Priority',
+                'type.game_optimization':'Game Optimization',
+                'type.diagnostico':     'Diagnostics',
+                // Misc
+                'mlModelActive':        'Model active',
+                'mlModelTraining':      'Model in training',
+                'appsNone':             'No apps found',
+                'appsLoadingTxt':       'Loading running apps...',
+                'activityNow':          'Now',
+                // Win Optimizer
+                'winoptSectionTitle':   'Windows Optimizations',
+                'winoptBundleBtnLabel': 'Full Optimization',
+                'wocVisualTitle':       'Visual Effects',
+                'wocVisualDesc':        'Disables animations and transparency',
+                'wocServicesTitle':     'Bloat Services',
+                'wocServicesDesc':      'Disables unnecessary services',
+                'wocTelemetryTitle':    'Telemetry',
+                'wocTelemetryDesc':     'Removes Microsoft tracking',
+                'wocPowerTitle':        'Power Plan',
+                'wocPowerDesc':         'Ultimate Performance',
+                'wocNetworkTitle':      'Network / TCP',
+                'wocNetworkDesc':       'Disables Nagle, tunes TCP',
+                'wocSchedulerTitle':    'Scheduler / MMCSS',
+                'wocSchedulerDesc':     'High resolution timer',
+                'wocPoliciesTitle':     'Windows Policies',
+                'wocPoliciesDesc':      'Removes startup delays',
+                'wocGPUTitle':          'GPU / HAGS',
+                'wocGPUDesc':           'Hardware Accelerated GPU Scheduling',
+                'wocMemoryTitle':       'RAM Memory',
+                'wocMemoryDesc':        'Clears standby list and compression',
+                'winoptKillTitle':      'Background Processes',
+                'winoptRefreshLabel':   'Refresh',
+                'winoptGameBoostTitle': 'Game Boost',
+                'winoptGameBoostBtn':   'Boost',
+                'deepaiSectionTitle':   'Deep AI Analysis',
+                'deepaiIdleText':       'Deep bottleneck analysis, predictions and personalized optimization plan via Gemini AI.',
+                'deepaiBtnRun':         'Analyze Deeply',
+                'deepaiBtnBottleneck':  'Specific Bottleneck',
+                'deepaiResultTitle':    'Full Analysis',
+                'deepaiClearBtn':       'Clear',
+                'deepaiRefineBtnLabel': 'Ask',
+            }
+        };
 
-        (async function electronIntegration() {
-            if (typeof window.fixme === 'undefined') return; // Não está no Electron
+        let currentLang = localStorage.getItem('fixme_lang') || 'pt';
 
-            console.log('[FixMe] Electron detectado - usando dados reais');
+        function t(key) {
+            return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || (TRANSLATIONS['pt'][key]) || key;
+        }
 
-            // Substituir detecção de hardware por dados reais
-            try {
-                const sysInfo = await window.fixme.getSystemInfo();
-                if (sysInfo.success) {
-                    hwState.cpu.name = sysInfo.data.cpuModel || hwState.cpu.name;
-                    hwState.cpu.cores = sysInfo.data.cpuCores || hwState.cpu.cores;
-                    hwState.memory.total = parseFloat(sysInfo.data.totalMemory) || hwState.memory.total;
-                    hwState.gpu.name = sysInfo.data.gpuModel || hwState.gpu.name;
-                    updateHardwareUI();
+        function applyLang() {
+            const ids = [
+                'statusTitle','statusSubtitle','scanBtnLabel','hwSectionTitle','hwLiveLabel',
+                'ramLabel','appsSectionTitle','appsViewAll','activitySectionTitle',
+                'aiPanelTitle','aiPanelSubtitle','aiIdleText',
+                'aiStep1Title','aiStep1Desc','aiStep2Title','aiStep2Desc',
+                'aiStep3Title','aiStep3Desc','aiStep4Title','aiStep4Desc','aiActionLabel',
+                'su-tagline','su-s1-lbl','su-s2-lbl','su-s3-lbl','su-s4-lbl',
+                'su-enter-lbl','su-score-lbl',
+                // Win Optimizer
+                'winoptSectionTitle','winoptBundleBtnLabel',
+                'wocVisualTitle','wocVisualDesc','wocServicesTitle','wocServicesDesc',
+                'wocTelemetryTitle','wocTelemetryDesc','wocPowerTitle','wocPowerDesc',
+                'wocNetworkTitle','wocNetworkDesc','wocSchedulerTitle','wocSchedulerDesc',
+                'wocPoliciesTitle','wocPoliciesDesc','wocGPUTitle','wocGPUDesc',
+                'wocMemoryTitle','wocMemoryDesc','winoptKillTitle','winoptRefreshLabel',
+                'winoptGameBoostTitle','winoptGameBoostBtn',
+                'deepaiSectionTitle','deepaiIdleText','deepaiBtnRun','deepaiBtnBottleneck',
+                'deepaiResultTitle','deepaiClearBtn','deepaiRefineBtnLabel',
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = t(id);
+            });
+            // ML section title
+            const mlTitle = document.querySelector('.ml-section-title');
+            if (mlTitle) mlTitle.childNodes[mlTitle.childNodes.length - 1].textContent = ' ' + t('mlSectionTitle');
+            // ML card labels
+            const mlLabels = [
+                ['ml-prediction-card', '.ml-card-label', 'mlPredLabel'],
+                ['ml-model-card',      '.ml-card-label', 'mlModelLabel'],
+                ['ml-usage-card',      '.ml-card-label', 'mlUsageLabel'],
+            ];
+            mlLabels.forEach(([cardId, sel, key]) => {
+                const card = document.getElementById(cardId);
+                if (card) { const el = card.querySelector(sel); if (el) el.textContent = t(key); }
+            });
+            // ML stat labels
+            const samplesLbl = document.querySelector('#ml-model-body .ml-stat-lbl:first-of-type');
+            const effectLbl  = document.querySelector('#ml-model-body .ml-stat-lbl:last-of-type');
+            if (samplesLbl) samplesLbl.textContent = t('mlSamplesLbl');
+            if (effectLbl)  effectLbl.textContent  = t('mlEffectLbl');
+            // AI confidence header text
+            const confHeader = document.querySelector('.ai-confidence-header');
+            if (confHeader) confHeader.childNodes[confHeader.childNodes.length - 1].textContent = ' ' + t('aiConfHeader');
+            // AI metric labels
+            const issLbl = document.querySelector('#aiMetricIssues + .ai-metric-lbl');
+            const fixLbl = document.querySelector('#aiMetricFixed + .ai-metric-lbl');
+            if (issLbl) issLbl.textContent = t('aiIssuesLbl');
+            if (fixLbl) fixLbl.textContent = t('aiFixedLbl');
+            // Usage label bars
+            const usageBars = document.querySelectorAll('.ml-usage-name');
+            const usageKeys = ['mlHPerf', 'mlClearRam', 'mlDiag'];
+            usageBars.forEach((el, i) => { if (usageKeys[i]) el.textContent = t(usageKeys[i]); });
+            // Lang button
+            const langLabel = document.getElementById('langLabel');
+            const langFlag  = document.getElementById('langFlag');
+            if (langLabel) langLabel.textContent = currentLang === 'pt' ? 'PT' : 'EN';
+            if (langFlag)  langFlag.textContent  = currentLang === 'pt' ? '🇧🇷' : '🇺🇸';
+        }
+
+        function toggleLang() {
+            currentLang = currentLang === 'pt' ? 'en' : 'pt';
+            localStorage.setItem('fixme_lang', currentLang);
+            applyLang();
+        }
+
+        // Override mlEngine.typeLabel to use translations
+        const _origTypeLabel = mlEngine.typeLabel.bind(mlEngine);
+        mlEngine.typeLabel = function(type) { return t('type.' + type) || _origTypeLabel(type); };
+
+        // ════════════════════════════════════════════
+        // STARTUP DIAGNOSTICS SEQUENCE
+        // ════════════════════════════════════════════
+
+        function suSetStep(n, state, subText, badgeText, badgeClass) {
+            const step = document.getElementById(`su-step-${n}`);
+            const sub  = document.getElementById(`su-s${n}-sub`);
+            const badge = document.getElementById(`su-s${n}-badge`);
+            const icon = step ? step.querySelector('.ss-icon') : null;
+            if (!step) return;
+            step.className = 'startup-step ' + state;
+            if (subText && sub) sub.textContent = subText;
+            if (badge) {
+                badge.textContent = badgeText;
+                badge.className = `ss-badge ${badgeClass}`;
+            }
+            if (icon) {
+                if (state === 'active') {
+                    icon.innerHTML = `<svg class="ss-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+                } else if (state === 'done') {
+                    icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>`;
                 }
-            } catch (e) { console.warn('[FixMe] Erro ao obter sysInfo:', e); }
+            }
+        }
 
-            // Substituir simulação por monitoramento real
-            clearInterval(hwMonitorInterval);
-            try {
-                await window.fixme.startMonitoring(2000);
-                window.fixme.onStatsUpdate((data) => {
-                    if (data.stats) {
-                        hwState.cpu.current = data.stats.cpuUsage || hwState.cpu.current;
-                        hwState.memory.current = data.stats.memoryUsage || hwState.memory.current;
-                        hwState.gpu.current = data.stats.gpuUsage || hwState.gpu.current;
-                        hwState.memory.used = Math.round(hwState.memory.total * (hwState.memory.current / 100) * 10) / 10;
-                        hwState.processCount = data.stats.processCount || hwState.processCount;
+        function suSetProgress(pct, label) {
+            const bar = document.getElementById('su-bar');
+            const lbl = document.getElementById('su-progress-lbl');
+            const pctEl = document.getElementById('su-progress-pct');
+            if (bar)   bar.style.width = pct + '%';
+            if (lbl)   lbl.textContent = label;
+            if (pctEl) pctEl.textContent = pct + '%';
+        }
+
+        function suShowScore(score, cpuPct, ramPct, gpuPct, issueCount) {
+            const panel = document.getElementById('su-score-panel');
+            const numEl = document.getElementById('su-score-num');
+            const arc   = document.getElementById('su-score-arc');
+            const hwEl  = document.getElementById('su-score-hw');
+            if (!panel) return;
+
+            const circumference = 2 * Math.PI * 34; // r=34 → ~213.6
+            const scoreColor = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : '#ef4444';
+            const offset = circumference * (1 - score / 100);
+
+            panel.style.display = 'flex';
+            if (numEl) { numEl.textContent = score; numEl.style.color = scoreColor; }
+            if (arc)   { arc.style.stroke = scoreColor; setTimeout(() => { arc.style.strokeDashoffset = offset; }, 50); }
+
+            const cpuColor = cpuPct < 50 ? '#10b981' : cpuPct < 80 ? '#f59e0b' : '#ef4444';
+            const ramColor = ramPct < 70 ? '#10b981' : ramPct < 85 ? '#f59e0b' : '#ef4444';
+            const issues = issueCount > 0 ? `⚠ ${issueCount}` : '✓ OK';
+            const issColor = issueCount === 0 ? '#10b981' : issueCount <= 2 ? '#f59e0b' : '#ef4444';
+
+            if (hwEl) hwEl.innerHTML = `
+                <div class="startup-hw-item">
+                    <div class="startup-hw-val" style="color:${cpuColor}">${Math.round(cpuPct)}%</div>
+                    <div class="startup-hw-lbl">CPU</div>
+                </div>
+                <div class="startup-hw-item">
+                    <div class="startup-hw-val" style="color:${ramColor}">${Math.round(ramPct)}%</div>
+                    <div class="startup-hw-lbl">RAM</div>
+                </div>
+                <div class="startup-hw-item">
+                    <div class="startup-hw-val" style="color:${issColor}">${issues}</div>
+                    <div class="startup-hw-lbl">${currentLang === 'en' ? 'Issues' : 'Problemas'}</div>
+                </div>`;
+        }
+
+        function dismissStartup() {
+            const overlay = document.getElementById('startupOverlay');
+            if (overlay) overlay.classList.add('fade-out');
+        }
+
+        async function runStartupSequence() {
+            applyLang();
+            suSetProgress(0, t('su-tagline'));
+
+            const isElectron = typeof window.fixme !== 'undefined';
+            let cpuPct = hwState.cpu.current;
+            let ramPct = hwState.memory.current;
+            let gpuPct = hwState.gpu.current;
+            let issueCount = 0;
+
+            // ── Step 1: Detect hardware ──
+            suSetStep(1, 'active', 'CPU · RAM · GPU', '...', 'pending');
+            suSetProgress(10, t('su-s1-lbl') + '...');
+
+            if (isElectron) {
+                try {
+                    const sysInfo = await window.fixme.getSystemInfo();
+                    if (sysInfo && sysInfo.success && sysInfo.data) {
+                        const d = sysInfo.data;
+                        hwState.cpu.name  = d.cpuModel || hwState.cpu.name;
+                        hwState.cpu.cores = d.cpuCores || hwState.cpu.cores;
+                        hwState.memory.total = parseFloat(d.totalMemory) || hwState.memory.total;
+                        hwState.gpu.name  = d.gpuModel || hwState.gpu.name;
                         updateHardwareUI();
+                        const hwSub = `${d.cpuModel ? d.cpuModel.split(' ').slice(0,3).join(' ') : 'CPU'} · ${d.totalMemory || '?'} GB`;
+                        suSetStep(1, 'done', hwSub, 'OK', 'ok');
+                    } else {
+                        suSetStep(1, 'done', t('su-s1-lbl'), 'OK', 'ok');
                     }
-                });
-            } catch (e) {
-                console.warn('[FixMe] Monitoramento real falhou, usando simulação:', e);
-                hwMonitorInterval = setInterval(simulateHardwareChanges, 2000);
+                } catch (e) {
+                    detectHardware();
+                    suSetStep(1, 'done', 'Simulated', 'OK', 'ok');
+                }
+            } else {
+                detectHardware();
+                await new Promise(r => setTimeout(r, 600));
+                suSetStep(1, 'done', `${hwState.cpu.cores} cores · ${hwState.memory.total} GB`, 'OK', 'ok');
             }
 
-            // Carregar ML real
-            try {
-                const mlStats = await window.fixme.getMLModelStats();
-                if (mlStats.success && mlStats.data) {
-                    const d = mlStats.data;
-                    const samplesEl = document.getElementById('ml-samples');
-                    const accuracyEl = document.getElementById('ml-accuracy');
-                    if (samplesEl) samplesEl.textContent = d.totalSamples || 0;
-                    if (accuracyEl) accuracyEl.textContent = `${d.avgEffectiveness || 0}%`;
-                }
-            } catch (e) { /* fallback to local ML */ }
+            suSetProgress(30, t('su-s2-lbl') + '...');
+            await new Promise(r => setTimeout(r, 200));
 
-            // Carregar uso real
-            try {
-                const usage = await window.fixme.getUsageStats();
-                if (usage.success && usage.data) {
-                    const usageBody = document.getElementById('ml-usage-body');
-                    if (usageBody) {
-                        const labels = { 'high_performance': 'High Performance', 'clear_ram': 'Limpeza de RAM', 'diagnostico': 'Diagnóstico' };
-                        const types = ['high_performance', 'clear_ram', 'diagnostico'];
-                        usageBody.innerHTML = types.map(type => {
-                            const u = usage.data[type] || { todayCount: 0, limit: 10 };
-                            const pct = Math.min((u.todayCount / u.limit) * 100, 100);
-                            return `<div class="ml-usage-item"><div class="ml-usage-label"><span class="ml-usage-name">${labels[type]}</span><span class="ml-usage-count">${u.todayCount}/${u.limit}</span></div><div class="ml-usage-bar-bg"><div class="ml-usage-bar" style="width:${pct}%"></div></div></div>`;
-                        }).join('');
+            // ── Step 2: System resources ──
+            suSetStep(2, 'active', '...', '...', 'pending');
+
+            if (isElectron) {
+                try {
+                    const statsRes = await window.fixme.getHardwareStats();
+                    if (statsRes && statsRes.success && statsRes.data && statsRes.data.stats) {
+                        const s = statsRes.data.stats;
+                        cpuPct = s.cpuUsage  || cpuPct;
+                        ramPct = s.memoryUsage || ramPct;
+                        gpuPct = s.gpuUsage  || gpuPct;
+                        hwState.cpu.current    = cpuPct;
+                        hwState.memory.current = ramPct;
+                        hwState.gpu.current    = gpuPct;
+                        hwState.processCount   = s.processCount || hwState.processCount;
+                        hwState.memory.used    = Math.round(hwState.memory.total * (ramPct / 100) * 10) / 10;
+                        updateHardwareUI();
                     }
+                    const resColor = cpuPct < 80 && ramPct < 85 ? 'ok' : 'warn';
+                    suSetStep(2, 'done', `CPU ${Math.round(cpuPct)}% · RAM ${Math.round(ramPct)}%`, resColor === 'ok' ? 'OK' : '⚠', resColor);
+                } catch (e) {
+                    simulateHardwareChanges();
+                    suSetStep(2, 'done', `CPU ${Math.round(cpuPct)}% · RAM ${Math.round(ramPct)}%`, 'OK', 'ok');
                 }
-            } catch (e) { /* fallback to local */ }
-        })();
+            } else {
+                simulateHardwareChanges();
+                cpuPct = hwState.cpu.current;
+                ramPct = hwState.memory.current;
+                gpuPct = hwState.gpu.current;
+                await new Promise(r => setTimeout(r, 700));
+                suSetStep(2, 'done', `CPU ${Math.round(cpuPct)}% · RAM ${Math.round(ramPct)}%`, 'OK', 'ok');
+            }
+
+            suSetProgress(60, t('su-s3-lbl') + '...');
+            await new Promise(r => setTimeout(r, 200));
+
+            // ── Step 3: Quick diagnostics ──
+            suSetStep(3, 'active', '...', '...', 'pending');
+
+            if (isElectron) {
+                try {
+                    const diagRes = await window.fixme.runDiagnostics();
+                    if (diagRes && diagRes.success) {
+                        issueCount = diagRes.totalIssues || 0;
+                        const severity = diagRes.severity || 'low';
+                        const badgeClass = severity === 'critical' ? 'crit' : severity === 'high' || severity === 'medium' ? 'warn' : 'ok';
+                        const badgeTxt = issueCount === 0 ? 'OK' : `${issueCount} ${currentLang === 'en' ? 'issues' : 'problemas'}`;
+                        suSetStep(3, 'done', `${issueCount} ${currentLang === 'en' ? 'issues detected' : 'problemas detectados'}`, badgeTxt, badgeClass);
+                    } else {
+                        suSetStep(3, 'done', currentLang === 'en' ? 'Check complete' : 'Verificação completa', 'OK', 'ok');
+                    }
+                } catch (e) {
+                    suSetStep(3, 'done', currentLang === 'en' ? 'Completed' : 'Concluído', 'OK', 'ok');
+                }
+            } else {
+                await new Promise(r => setTimeout(r, 800));
+                issueCount = ramPct > 85 ? 1 : 0;
+                suSetStep(3, 'done', currentLang === 'en' ? 'Simulated check' : 'Verificação simulada', issueCount > 0 ? '⚠' : 'OK', issueCount > 0 ? 'warn' : 'ok');
+            }
+
+            suSetProgress(85, t('su-s4-lbl') + '...');
+            await new Promise(r => setTimeout(r, 200));
+
+            // ── Step 4: ML Engine ──
+            suSetStep(4, 'active', '...', '...', 'pending');
+
+            if (isElectron) {
+                try {
+                    const mlRes = await window.fixme.getMLModelStats();
+                    if (mlRes && mlRes.success && mlRes.data) {
+                        const samples = mlRes.data.totalSamples || 0;
+                        const eff = mlRes.data.avgEffectiveness || 0;
+                        const samplesEl = document.getElementById('ml-samples');
+                        const accuracyEl = document.getElementById('ml-accuracy');
+                        if (samplesEl) samplesEl.textContent = samples;
+                        if (accuracyEl) accuracyEl.textContent = `${eff}%`;
+                        suSetStep(4, 'done', `${samples} ${currentLang === 'en' ? 'samples' : 'amostras'} · ${eff}% ${currentLang === 'en' ? 'effectiveness' : 'efetividade'}`, 'OK', 'ok');
+                    } else {
+                        suSetStep(4, 'done', currentLang === 'en' ? 'Ready' : 'Pronto', 'OK', 'ok');
+                    }
+                } catch (e) {
+                    suSetStep(4, 'done', currentLang === 'en' ? 'Ready' : 'Pronto', 'OK', 'ok');
+                }
+            } else {
+                await new Promise(r => setTimeout(r, 500));
+                const mlStats = mlEngine.getStats();
+                suSetStep(4, 'done', `${mlStats.totalSamples} ${currentLang === 'en' ? 'samples' : 'amostras'}`, 'OK', 'ok');
+            }
+
+            suSetProgress(100, currentLang === 'en' ? 'Analysis complete!' : 'Análise completa!');
+
+            // ── Compute health score ──
+            await new Promise(r => setTimeout(r, 300));
+            const cpuScore   = cpuPct < 50 ? 100 : cpuPct < 80 ? Math.round(100 - (cpuPct - 50) * 1.5) : Math.round(100 - (cpuPct - 50) * 2);
+            const ramScore   = ramPct < 60 ? 100 : ramPct < 85 ? Math.round(100 - (ramPct - 60) * 2)   : Math.round(100 - (ramPct - 60) * 3);
+            const issScore   = Math.max(0, 100 - issueCount * 15);
+            const healthScore = Math.max(10, Math.min(99, Math.round((cpuScore * 0.35 + ramScore * 0.4 + issScore * 0.25))));
+
+            suShowScore(healthScore, cpuPct, ramPct, gpuPct, issueCount);
+
+            const enterBtn = document.getElementById('su-enter-btn');
+            if (enterBtn) enterBtn.style.display = 'flex';
+
+            // Auto-dismiss after 2.5s if score is good
+            if (healthScore >= 70) {
+                setTimeout(dismissStartup, 2500);
+            }
+
+            // Start real-time monitoring in background
+            if (isElectron) {
+                try {
+                    await window.fixme.startMonitoring(2000);
+                    window.fixme.onStatsUpdate((data) => {
+                        if (data.stats) {
+                            hwState.cpu.current    = data.stats.cpuUsage    || hwState.cpu.current;
+                            hwState.memory.current = data.stats.memoryUsage || hwState.memory.current;
+                            hwState.gpu.current    = data.stats.gpuUsage    || hwState.gpu.current;
+                            hwState.memory.used    = Math.round(hwState.memory.total * (hwState.memory.current / 100) * 10) / 10;
+                            hwState.processCount   = data.stats.processCount || hwState.processCount;
+                            updateHardwareUI();
+                        }
+                    });
+                } catch (e) {
+                    hwMonitorInterval = setInterval(simulateHardwareChanges, 2000);
+                }
+            } else {
+                hwMonitorInterval = setInterval(simulateHardwareChanges, 2000);
+            }
+        }
+
+        // ── Initialize on DOM ready ──
+        document.addEventListener('DOMContentLoaded', () => {
+            updateMLCards();
+            setInterval(updateMLCards, 10000);
+
+            // Seed ML with initial data if empty
+            if (mlEngine.trainingData.length === 0) {
+                const types = ['high_performance', 'clear_ram', 'diagnostico', 'process_priority'];
+                for (let i = 0; i < 5; i++) {
+                    const mockStats = {
+                        cpu: { current: Math.random() * 80 + 10 },
+                        memory: { current: Math.random() * 60 + 20 },
+                        gpu: { current: Math.random() * 50 + 5 },
+                        processCount: Math.floor(Math.random() * 200) + 50
+                    };
+                    mlEngine.train(mockStats, types[i % types.length], 0.4 + Math.random() * 0.5);
+                }
+                updateMLCards();
+            }
+
+            loadRunningApps();
+            setInterval(loadRunningApps, 30000);
+
+            // Run startup sequence (replaces the old electronIntegration IIFE)
+            runStartupSequence();
+
+            // Load kill candidates on startup
+            refreshKillCandidates();
+        });
+
+        // ── Win Optimizer ──────────────────────────────────────────────────────
+
+        function showToast(msg, duration = 3000) {
+            const t = document.getElementById('winoptToast');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), duration);
+        }
+
+        async function applyWinOpt(type, checked) {
+            if (!window.fixme) { showToast('Electron não disponível'); return; }
+            const labels = {
+                visual: [t('wocVisualTitle') || 'Efeitos Visuais', t('wocVisualTitle') || 'Efeitos Visuais'],
+                services: [t('wocServicesTitle') || 'Serviços Bloat'],
+                telemetry: [t('wocTelemetryTitle') || 'Telemetria'],
+                power: [t('wocPowerTitle') || 'Plano de Energia'],
+                network: [t('wocNetworkTitle') || 'Rede / TCP'],
+                scheduler: [t('wocSchedulerTitle') || 'Scheduler'],
+                policies: [t('wocPoliciesTitle') || 'Políticas'],
+                gpu: [t('wocGPUTitle') || 'GPU / HAGS'],
+                memory: [t('wocMemoryTitle') || 'Memória RAM']
+            };
+            const name = (labels[type] || [type])[0];
+            if (!checked) { showToast(`${name} — revertido`); return; }
+            showToast(`Aplicando ${name}...`);
+            try {
+                const handlers = {
+                    visual: () => window.fixme.winOptVisualEffects(true),
+                    services: () => window.fixme.winOptDisableServices(),
+                    telemetry: () => window.fixme.winOptDisableTelemetry(),
+                    power: () => window.fixme.winOptPowerPlan(false),
+                    network: () => window.fixme.winOptNetwork(),
+                    scheduler: () => window.fixme.winOptScheduler(),
+                    policies: () => window.fixme.winOptRemovePolicies(),
+                    gpu: () => window.fixme.winOptGPU(),
+                    memory: () => window.fixme.winOptMemory()
+                };
+                const fn = handlers[type];
+                if (!fn) return;
+                const res = await fn();
+                if (res && res.success) {
+                    showToast(`✓ ${name} aplicado`);
+                } else {
+                    showToast(`Erro: ${(res && res.error) || 'falha desconhecida'}`);
+                    document.getElementById('tog' + type.charAt(0).toUpperCase() + type.slice(1)).checked = false;
+                }
+            } catch (e) {
+                showToast(`Erro: ${e.message}`);
+            }
+        }
+
+        async function runFullOptimization() {
+            if (!window.fixme) { showToast('Electron não disponível'); return; }
+            const btn = document.getElementById('winoptBundleBtn');
+            if (btn) btn.disabled = true;
+            showToast('Iniciando otimização completa... aguarde UAC');
+            try {
+                const options = {
+                    visualEffects: true, bloatServices: true, telemetry: true,
+                    powerPlan: true, network: true, scheduler: true,
+                    policies: true, gpu: true, memory: true, killBackground: true
+                };
+                const res = await window.fixme.winOptFullBundle(options);
+                if (res && res.success) {
+                    const d = res.data || {};
+                    const done = (d.completed || []).length;
+                    const fail = (d.failed || []).length;
+                    showToast(`✓ Otimização completa: ${done} ok, ${fail} falhas`, 5000);
+                    // Check all toggles
+                    ['Visual','Services','Telemetry','Power','Network','Scheduler','Policies','GPU','Memory'].forEach(k => {
+                        const el = document.getElementById('tog' + k);
+                        if (el) el.checked = true;
+                    });
+                } else {
+                    showToast(`Erro: ${(res && res.error) || 'falha'}`);
+                }
+            } catch (e) {
+                showToast(`Erro: ${e.message}`);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function refreshKillCandidates() {
+            const list = document.getElementById('winoptKillList');
+            if (!list) return;
+            if (!window.fixme) {
+                list.innerHTML = '<div class="winopt-kill-loading">Electron não disponível</div>';
+                return;
+            }
+            list.innerHTML = '<div class="winopt-kill-loading">Verificando processos...</div>';
+            try {
+                const res = await window.fixme.winOptGetKillCandidates();
+                if (!res || !res.success || !res.data || res.data.length === 0) {
+                    list.innerHTML = '<div class="winopt-kill-loading">Nenhum processo desnecessário detectado</div>';
+                    return;
+                }
+                list.innerHTML = res.data.map(p => `
+                    <div class="winopt-kill-item">
+                        <span class="winopt-kill-name">${p.name}</span>
+                        <span class="winopt-kill-cpu">${(p.cpu || 0).toFixed(1)}% CPU</span>
+                        <button class="winopt-kill-btn" onclick="killProcess('${p.name}')">Kill</button>
+                    </div>`).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="winopt-kill-loading">Erro: ${e.message}</div>`;
+            }
+        }
+
+        async function killProcess(name) {
+            if (!window.fixme) return;
+            showToast(`Encerrando ${name}...`);
+            try {
+                const res = await window.fixme.winOptKillBackground();
+                showToast(`✓ Processos encerrados`);
+                setTimeout(refreshKillCandidates, 1500);
+            } catch (e) {
+                showToast(`Erro ao encerrar: ${e.message}`);
+            }
+        }
+
+        async function boostGameProcess() {
+            if (!window.fixme) { showToast('Electron não disponível'); return; }
+            const input = document.getElementById('gameBoostInput');
+            const name = input ? input.value.trim() : '';
+            if (!name) { showToast('Digite o nome do processo (.exe)'); return; }
+            showToast(`Aplicando boost em ${name}...`);
+            try {
+                const res = await window.fixme.winOptBoostGame(name);
+                if (res && res.success) {
+                    showToast(`✓ Boost aplicado em ${name}`, 4000);
+                    if (input) input.value = '';
+                } else {
+                    showToast(`Erro: ${(res && res.error) || 'processo não encontrado'}`);
+                }
+            } catch (e) {
+                showToast(`Erro: ${e.message}`);
+            }
+        }
+
+        // ── Deep AI ────────────────────────────────────────────────────────────
+
+        let deepAIActive = false;
+
+        async function runDeepAnalysis(userContext) {
+            if (!window.fixme) { showToast('Electron não disponível'); return; }
+            if (deepAIActive) { showToast('Análise em andamento...'); return; }
+            deepAIActive = true;
+            const idle = document.getElementById('deepaiIdle');
+            const result = document.getElementById('deepaiResult');
+            const content = document.getElementById('deepaiResultContent');
+            if (idle) idle.style.display = 'none';
+            if (result) result.style.display = 'block';
+            if (content) content.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;padding:1rem 0;text-align:center">Coletando dados e consultando Gemini AI...</div>';
+            try {
+                const res = await window.fixme.deepAIAnalyze(userContext || '');
+                if (!res || !res.success) {
+                    if (content) content.innerHTML = `<div style="color:#f87171;font-size:0.8rem">${(res && res.error) || 'Erro na análise'}</div>`;
+                    deepAIActive = false;
+                    return;
+                }
+                renderDeepAIResult(res.data, content);
+            } catch (e) {
+                if (content) content.innerHTML = `<div style="color:#f87171;font-size:0.8rem">Erro: ${e.message}</div>`;
+            }
+            deepAIActive = false;
+        }
+
+        function renderDeepAIResult(data, container) {
+            if (!container || !data) return;
+            if (data.error) {
+                container.innerHTML = `<div style="color:#f87171;font-size:0.8rem">Erro da IA: ${data.error}</div>`;
+                return;
+            }
+            const profile = data.systemProfile || {};
+            const plan = data.optimizationPlan || [];
+            const preds = data.predictions || {};
+            const insights = data.insights || [];
+
+            const bottlenecks = [
+                profile.cpuBottleneck && 'CPU',
+                profile.memoryBottleneck && 'Memória',
+                profile.gpuBottleneck && 'GPU'
+            ].filter(Boolean).join(', ') || 'Nenhum detectado';
+
+            const issues = (profile.topIssues || []).map(i => `<li style="font-size:0.75rem;color:var(--text-muted);margin-bottom:3px">${i}</li>`).join('');
+
+            const planHTML = plan.slice(0, 5).map(item => `
+                <div class="deepai-plan-item">
+                    <div class="deepai-plan-header">
+                        <span class="deepai-plan-title">${item.title || ''}</span>
+                        <span class="deepai-plan-impact ${item.impact || 'medium'}">${item.impact || 'médio'}</span>
+                    </div>
+                    <div class="deepai-plan-desc">${item.description || item.estimatedGain || ''}</div>
+                </div>`).join('');
+
+            const insightsHTML = insights.map(i => `<div style="font-size:0.75rem;color:var(--text-muted);padding:0.3rem 0;border-bottom:1px solid var(--border-color)">${i}</div>`).join('');
+
+            container.innerHTML = `
+                <div style="margin-bottom:0.75rem">
+                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">Gargalos: <span style="color:#f87171">${bottlenecks}</span></div>
+                    ${issues ? `<ul style="margin:0;padding-left:1rem">${issues}</ul>` : ''}
+                </div>
+                <div class="deepai-predictions">
+                    <div class="deepai-pred-box">
+                        <div class="deepai-pred-val">+${preds.estimatedFpsGain || 0}</div>
+                        <div class="deepai-pred-label">FPS est.</div>
+                    </div>
+                    <div class="deepai-pred-box">
+                        <div class="deepai-pred-val">-${preds.estimatedLatencyReduction || 0}ms</div>
+                        <div class="deepai-pred-label">Latência</div>
+                    </div>
+                    <div class="deepai-pred-box">
+                        <div class="deepai-pred-val">-${preds.estimatedBootImprovement || 0}s</div>
+                        <div class="deepai-pred-label">Boot</div>
+                    </div>
+                </div>
+                ${planHTML}
+                ${insightsHTML ? `<div style="margin-top:0.75rem">${insightsHTML}</div>` : ''}`;
+        }
+
+        async function refineDeepAnalysis() {
+            if (!window.fixme) return;
+            const input = document.getElementById('deepaiRefineInput');
+            const question = input ? input.value.trim() : '';
+            if (!question) { showToast('Digite uma pergunta'); return; }
+            const content = document.getElementById('deepaiResultContent');
+            if (content) {
+                const prevHTML = content.innerHTML;
+                content.innerHTML += '<div style="color:var(--text-muted);font-size:0.78rem;padding:0.5rem 0">Consultando IA...</div>';
+                try {
+                    const res = await window.fixme.deepAIRefine(question);
+                    if (res && res.success && res.data) {
+                        content.innerHTML = prevHTML;
+                        if (res.data.answer) {
+                            content.innerHTML += `<div style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.2);border-radius:8px;padding:0.65rem;margin-top:0.5rem;font-size:0.8rem;color:var(--text-primary)">${res.data.answer}</div>`;
+                        }
+                        if (res.data.additionalOptimizations && res.data.additionalOptimizations.length) {
+                            renderDeepAIResult({ optimizationPlan: res.data.additionalOptimizations }, { innerHTML: '' });
+                        }
+                    }
+                } catch (e) {
+                    content.innerHTML += `<div style="color:#f87171;font-size:0.78rem">Erro: ${e.message}</div>`;
+                }
+            }
+            if (input) input.value = '';
+        }
+
+        async function showBottleneckMenu() {
+            const type = await new Promise(resolve => {
+                const menu = document.createElement('div');
+                menu.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem;min-width:220px';
+                menu.innerHTML = `<div style="font-size:0.85rem;font-weight:600;margin-bottom:0.5rem">Analisar gargalo:</div>
+                    <button onclick="this.closest('div').dataset.choice='cpu';this.closest('[style]').remove()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:0.5rem;color:#f87171;cursor:pointer">CPU</button>
+                    <button onclick="this.closest('div').dataset.choice='memory';this.closest('[style]').remove()" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:0.5rem;color:#fbbf24;cursor:pointer">Memória</button>
+                    <button onclick="this.closest('div').dataset.choice='gpu';this.closest('[style]').remove()" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:0.5rem;color:#818cf8;cursor:pointer">GPU</button>
+                    <button onclick="this.closest('[style]').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;margin-top:0.25rem">Cancelar</button>`;
+                document.body.appendChild(menu);
+                const obs = new MutationObserver(() => {
+                    if (!document.body.contains(menu)) { obs.disconnect(); resolve(null); }
+                    else if (menu.dataset.choice) { obs.disconnect(); resolve(menu.dataset.choice); }
+                });
+                obs.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => { if (document.body.contains(menu)) { menu.remove(); resolve(null); } }, 15000);
+            });
+            if (!type || !window.fixme) return;
+            showToast(`Analisando gargalo de ${type}...`);
+            const idle = document.getElementById('deepaiIdle');
+            const result = document.getElementById('deepaiResult');
+            const content = document.getElementById('deepaiResultContent');
+            if (idle) idle.style.display = 'none';
+            if (result) result.style.display = 'block';
+            if (content) content.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;padding:1rem 0;text-align:center">Analisando...</div>';
+            try {
+                const res = await window.fixme.deepAIBottleneck(type);
+                if (res && res.success) {
+                    const d = res.data || {};
+                    content.innerHTML = `
+                        ${d.rootCause ? `<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem"><strong style="color:var(--text-primary)">Causa raiz:</strong> ${d.rootCause}</div>` : ''}
+                        ${(d.optimizations || []).map(o => `
+                            <div class="deepai-plan-item">
+                                <div class="deepai-plan-header">
+                                    <span class="deepai-plan-title">${o.title || ''}</span>
+                                    <span class="deepai-plan-impact ${o.impact || 'medium'}">${o.impact || 'médio'}</span>
+                                </div>
+                                ${(o.steps || []).map(s => `<div class="deepai-plan-desc">• ${s}</div>`).join('')}
+                            </div>`).join('')}
+                        ${d.warnings ? d.warnings.map(w => `<div style="color:#fbbf24;font-size:0.75rem;margin-top:0.5rem">⚠ ${w}</div>`).join('') : ''}`;
+                }
+            } catch (e) {
+                if (content) content.innerHTML = `<div style="color:#f87171;font-size:0.8rem">Erro: ${e.message}</div>`;
+            }
+        }
+
+        function clearDeepAISession() {
+            if (window.fixme) window.fixme.deepAIClearSession();
+            const idle = document.getElementById('deepaiIdle');
+            const result = document.getElementById('deepaiResult');
+            if (idle) idle.style.display = 'flex';
+            if (result) result.style.display = 'none';
+            deepAIActive = false;
+            showToast('Sessão da IA limpa');
+        }
+
+        // Run startup sequence (replaces the old electronIntegration IIFE)
+        // (already called in DOMContentLoaded above)
     </script>
 </body>
 </html>

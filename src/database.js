@@ -14,7 +14,8 @@ let database = {
   ai_recommendations: [],
   user_feedback: [],
   ml_training_data: [],
-  request_log: []
+  request_log: [],
+  local_ml_state: null
 };
 
 function initDatabase() {
@@ -25,6 +26,7 @@ function initDatabase() {
       // Compatibilidade com versões anteriores
       if (!database.ml_training_data) database.ml_training_data = [];
       if (!database.request_log) database.request_log = [];
+      if (!database.local_ml_state) database.local_ml_state = null;
     } catch (err) {
       console.error('Erro ao carregar banco de dados:', err);
       database = {
@@ -169,6 +171,16 @@ function getRequestLog() {
   return database.request_log || [];
 }
 
+// ── Local ML State ──
+function saveLocalMLState(state) {
+  database.local_ml_state = state;
+  saveDatabase();
+}
+
+function getLocalMLState() {
+  return database.local_ml_state || null;
+}
+
 module.exports = {
   initDatabase,
   recordOptimization,
@@ -184,5 +196,7 @@ module.exports = {
   recordMLTrainingSample,
   getMLTrainingData,
   recordRequestLog,
-  getRequestLog
+  getRequestLog,
+  saveLocalMLState,
+  getLocalMLState
 };
