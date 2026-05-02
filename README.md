@@ -5,23 +5,43 @@
 <h1 align="center">FixMe</h1>
 
 <p align="center">
-  <strong>Ferramenta de otimizacao desktop para Windows 10/11 com foco em jogos</strong><br/>
-  Electron + Gemini AI + Machine Learning (kNN) + Monitoramento em tempo real
+  <strong>Otimizador de desempenho desktop para Windows 10/11 com foco em jogos</strong><br/>
+  Electron · Gemini AI · 5 Modelos ML Locais · Deep AI · Monitoramento em tempo real
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-blue?style=flat-square" alt="Platform"/>
-  <img src="https://img.shields.io/badge/electron-v28.3.3-47848f?style=flat-square" alt="Electron"/>
+  <img src="https://img.shields.io/badge/version-1.0.0-blue?style=flat-square" alt="Version"/>
+  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4?style=flat-square" alt="Platform"/>
+  <img src="https://img.shields.io/badge/electron-v28-47848f?style=flat-square" alt="Electron"/>
   <img src="https://img.shields.io/badge/AI-Gemini%202.0%20Flash-8b5cf6?style=flat-square" alt="Gemini"/>
-  <img src="https://img.shields.io/badge/ML-kNN%20Engine-00c853?style=flat-square" alt="ML"/>
+  <img src="https://img.shields.io/badge/ML-5%20Modelos%20Locais-00c853?style=flat-square" alt="ML"/>
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"/>
+  <a href="https://github.com/leosan123456/FixMe/releases/latest">
+    <img src="https://img.shields.io/github/v/release/leosan123456/FixMe?style=flat-square&label=release" alt="Release"/>
+  </a>
 </p>
+
+---
+
+## Instalacao Rapida
+
+### Uma linha (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/leosan123456/FixMe/main/install.ps1 | iex
+```
+
+O script baixa automaticamente o instalador da ultima release, solicita UAC e apos instalar oferece configurar a chave Gemini AI.
+
+### Instalacao manual
+
+Baixe o instalador `.exe` diretamente na pagina de [Releases](https://github.com/leosan123456/FixMe/releases/latest) e execute como administrador.
 
 ---
 
 ## Visao Geral
 
-O **FixMe** e uma aplicacao desktop construida com Electron que monitora, diagnostica e otimiza o desempenho do seu PC Windows em tempo real. Ele combina coleta de dados de hardware, diagnosticos automatizados, Machine Learning preditivo e inteligencia artificial (Google Gemini) para fornecer recomendacoes personalizadas.
+O **FixMe** e uma aplicacao desktop construida com Electron que monitora, diagnostica e otimiza o desempenho do seu PC Windows em tempo real. Combina coleta de dados de hardware, diagnosticos automatizados, **5 modelos de Machine Learning 100% locais**, Deep AI (Gemini) e otimizacoes profundas do Windows para fornecer recomendacoes personalizadas baseadas no seu historico de uso real.
 
 ---
 
@@ -31,13 +51,13 @@ O **FixMe** e uma aplicacao desktop construida com Electron que monitora, diagno
   <img src="docs/screenshots/hardware-gauges.svg" alt="Hardware Gauges" width="100%"/>
 </p>
 
-O dashboard apresenta uma interface moderna com tema escuro, exibindo dados em tempo real:
+Interface moderna com tema escuro exibindo dados em tempo real:
 
-- **Gauges de Hardware** - CPU, RAM e GPU com gauge rings SVG animados
-- **Apps em Execucao** - Grid com icones reais dos processos extraidos via `app.getFileIcon()`
-- **ML Insights** - 3 cards com predicoes, status do modelo e perfil de uso
-- **Painel de Analise IA** - Sidebar com pipeline de 4 etapas e recomendacoes Gemini
-- **Correcoes Recentes** - Timeline de otimizacoes aplicadas
+- **Gauges de Hardware** — CPU, RAM e GPU com gauge rings SVG animados
+- **Apps em Execucao** — Grid com icones reais dos processos via `app.getFileIcon()`
+- **ML Insights** — Cards com predicoes dos 5 modelos locais, perfil de uso e anomalias
+- **Painel Deep AI** — Pipeline de 4 etapas com progresso em tempo real e recomendacoes Gemini
+- **Correcoes Recentes** — Timeline de otimizacoes aplicadas
 
 ---
 
@@ -45,42 +65,43 @@ O dashboard apresenta uma interface moderna com tema escuro, exibindo dados em t
 
 ### 1. Monitoramento de Hardware em Tempo Real
 
-<p align="center">
-  <img src="docs/screenshots/hardware-gauges.svg" alt="Hardware Monitoring" width="100%"/>
-</p>
-
 | Metrica | Detalhes |
 |---------|----------|
-| **CPU** | Uso atual (%), modelo, cores/threads, barra de uso colorida |
-| **RAM** | Uso atual (%), total/usado em GB, barra de uso colorida |
-| **GPU** | Uso atual (%), modelo, VRAM, barra de uso colorida |
+| **CPU** | Uso atual (%), modelo, cores, barra adaptativa |
+| **RAM** | Uso atual (%), total/usado em GB |
+| **GPU** | Uso atual (%), modelo, VRAM |
 
-- Monitoramento via biblioteca `systeminformation`
-- Atualizacao automatica a cada 2 segundos via IPC
-- Gauge rings SVG com animacao suave de transicao
-- Indicador **LIVE** com pulse animation
+- Atualizacao a cada 2 segundos via IPC broadcast (`hw:stats-update`)
 - Cores adaptativas: verde (<60%), amarelo (60-80%), vermelho (>80%)
+- Cada tick alimenta automaticamente os 5 modelos ML locais
 
 ---
 
-### 2. Apps em Execucao com Icones Reais
+### 2. Machine Learning Local — 5 Modelos (sem API)
 
 <p align="center">
-  <img src="docs/screenshots/apps-real-icons.svg" alt="Real App Icons" width="100%"/>
+  <img src="docs/screenshots/ml-insights.svg" alt="ML Insights" width="100%"/>
 </p>
 
-- Coleta processos em execucao via `systeminformation.processes()`
-- Extrai icones reais dos executaveis `.exe` usando `app.getFileIcon()` do Electron
-- Converte icones para data URL (base64 PNG) via `NativeImage.toDataURL()`
-- Agrupa processos duplicados e soma CPU/RAM
-- Exibe top 12 apps ordenados por uso de CPU
-- Barra de uso com cor adaptativa (verde/amarelo/vermelho)
-- Atualizacao automatica a cada 30 segundos
-- Tooltip com caminho completo e metricas detalhadas
+Todos os modelos rodam 100% offline, aprendem com o historico real do usuario e persistem via banco local.
+
+| Modelo | Algoritmo | O que aprende |
+|--------|-----------|---------------|
+| **AnomalyDetector** | Welford online z-score | Detecta CPU/RAM/GPU anormais vs. baseline do usuario |
+| **PerformanceForecast** | Exponential smoothing (168 slots hora×dia) | Prevê carga esperada para a proxima hora |
+| **UserProfileCluster** | Online k-means (k=4) | Aprende perfil dominante: Gamer / Trabalho / Idle / Misto |
+| **SessionClassifier** | Naive Bayes | Classifica sessao atual (gaming, work, idle, media, browser) |
+| **OptimizationScorer** | kNN ponderado por recencia (half-life 30 dias) | Prediz qual otimizacao gera maior queda de CPU/RAM/GPU |
+
+**Detalhe do OptimizationScorer:**
+- Vetor de 8 dimensoes: `[cpu, mem, gpu, hora, dia, processos, cpuTrend, memTrend]`
+- Rastreia delta antes/depois de cada otimizacao aplicada
+- Blends de score medido (delta real) + avaliacao do usuario
+- Decaimento exponencial temporal — otimizacoes recentes pesam mais
 
 ---
 
-### 3. Analise de IA Completa (Gemini 2.0 Flash)
+### 3. Deep AI (Gemini 2.0 Flash)
 
 <p align="center">
   <img src="docs/screenshots/ai-analysis.svg" alt="AI Analysis" width="45%"/>
@@ -90,96 +111,69 @@ Pipeline de 4 etapas com progresso em tempo real:
 
 | Etapa | Descricao | Modulo |
 |-------|-----------|--------|
-| **1. Coleta de Hardware** | Dados de CPU, RAM, GPU, processos | `hardware.js` |
-| **2. Diagnostico do Sistema** | 10 verificacoes automatizadas | `diagnostics.js` |
-| **3. Predicao ML** | Algoritmo kNN com dados historicos | `ml-engine.js` |
-| **4. Gemini AI** | Recomendacoes inteligentes personalizadas | `ai-optimizer.js` |
+| **1. Hardware** | CPU, RAM, GPU, processos | `hardware.js` |
+| **2. Diagnostico** | 10 verificacoes automatizadas | `diagnostics.js` |
+| **3. ML Local** | Predicoes dos 5 modelos locais | `local-ml.js` |
+| **4. Gemini AI** | Recomendacoes inteligentes personalizadas | `deep-ai.js` + `ai-optimizer.js` |
 
-**Detalhes da integracao IA:**
-- Modelo: `gemini-2.0-flash` via `@google/generative-ai` SDK
-- Prompt estruturado com perfil de hardware, estado atual e historico
-- Resposta em JSON com recomendacoes priorizadas (critico/alto/medio/baixo)
-- Cada recomendacao inclui: titulo, descricao, comando e prioridade
-- Barra de confianca com metrica de issues detectadas vs corrigidas
+- Conversa multi-turn com contexto de sessao
+- Fingerprint do sistema: hardware + processos + historico + padroes locais
+- Resposta estruturada em JSON com `systemProfile`, `optimizationPlan`, `predictions` e `insights`
+- Analise de gargalos por tipo: `cpu`, `memory`, `gpu`, `network`
+- Analise da lista de processos: identifica processos seguros de matar, suspeitos e tweaks de prioridade
 
 ---
 
-### 4. Machine Learning Engine (kNN)
+### 4. Otimizacoes Profundas do Windows
 
-<p align="center">
-  <img src="docs/screenshots/ml-insights.svg" alt="ML Insights" width="100%"/>
-</p>
+| Categoria | Descricao |
+|-----------|-----------|
+| **Plano de Energia** | Ultimate Performance / High Performance com throttling 100% |
+| **Efeitos Visuais** | Desabilita animacoes, sombras, transparencias |
+| **Servicos Bloat** | Desabilita 16 servicos desnecessarios (telemetria, Xbox, Fax…) |
+| **Telemetria** | Remove coleta de dados Microsoft, CEIP, historico de atividades |
+| **Rede** | Desabilita Nagle, habilita RSS/Chimney, ajusta NetworkThrottlingIndex |
+| **Scheduler** | MMCSS Games profile: GPU Priority 8, Clock Rate 10000, Scheduling High |
+| **Registro** | Remove startup delay, prefetch SSD, tips, maintenance automtica |
+| **GPU** | HAGS, Game Mode, GameDVR, fullscreen optimizations, NVIDIA PowerMizer |
+| **Memoria** | Clear standby list, working set trim, heap decommit threshold |
+| **Processos** | Kill background (OneDrive, Teams, Discord…), boost de prioridade para jogos |
 
-| Funcionalidade | Descricao |
-|---------------|-----------|
-| **Algoritmo** | k-Nearest Neighbors (k=3) com distancia euclidiana normalizada |
-| **Features** | CPU%, RAM%, GPU%, contagem de processos |
-| **Treinamento** | Automatico apos cada otimizacao executada |
-| **Predicao** | Sugere melhor otimizacao baseada no estado atual do hardware |
-| **Persistencia** | `localStorage` (browser) + JSON database (Electron) |
-| **Cards** | Predicao ML, Status do Modelo (amostras/efetividade), Perfil de Uso |
-
-**3 Cards do ML Insights:**
-1. **Predicao ML** - Mostra predicoes com tipo, confianca e barra de score
-2. **Status do Modelo** - Amostras treinadas e efetividade media
-3. **Perfil de Uso** - Rate limiting visual por tipo de operacao
+Todas as operacoes privilegiadas passam por UAC via `sudo-prompt` e sao protegidas por rate limiting.
 
 ---
 
 ### 5. Diagnostico do Sistema (10 Verificacoes)
 
-O modulo de diagnostico executa 10 verificacoes automatizadas:
-
-| # | Verificacao | Severidade | Detalhes |
-|---|-----------|------------|----------|
-| 1 | **Windows Updates** | HIGH | Verifica instalacoes recentes de atualizacoes |
-| 2 | **Espaco em Disco** | CRITICAL/HIGH | Alerta >85% ou >95% de uso |
-| 3 | **Drivers** | MEDIUM | Detecta dispositivos com problemas no Device Manager |
-| 4 | **Processos Suspeitos** | CRITICAL | Pattern matching: malware, virus, crypto, miner |
-| 5 | **Temperatura CPU** | HIGH/MEDIUM | Alerta >75C ou >85C |
-| 6 | **Saude da Memoria** | HIGH/MEDIUM | Alerta >80% ou >90% de uso |
-| 7 | **Servicos Criticos** | MEDIUM | WinDefend, wscsvc, Wecsvc |
-| 8 | **Fragmentacao** | LOW | Status do desfragmentador automatico |
-| 9 | **Saude da Rede** | MEDIUM | Erros RX/TX nas interfaces |
-| 10 | **Windows Defender** | CRITICAL | Protecao em tempo real |
+| # | Verificacao | Severidade |
+|---|------------|------------|
+| 1 | Windows Updates recentes | HIGH |
+| 2 | Espaco em disco (>85% / >95%) | CRITICAL/HIGH |
+| 3 | Dispositivos com erro no Device Manager | MEDIUM |
+| 4 | Processos suspeitos (malware patterns) | CRITICAL |
+| 5 | Temperatura CPU (>75°C / >85°C) | HIGH/MEDIUM |
+| 6 | Saude da memoria (>80% / >90%) | HIGH/MEDIUM |
+| 7 | Servicos criticos (Defender, WMI) | MEDIUM |
+| 8 | Fragmentacao do disco | LOW |
+| 9 | Erros RX/TX nas interfaces de rede | MEDIUM |
+| 10 | Windows Defender em tempo real | CRITICAL |
 
 ---
 
-### 6. Otimizacoes do Sistema
+### 6. Apps em Execucao com Icones Reais
 
-| Otimizacao | Descricao | Execucao |
-|-----------|-----------|----------|
-| **High Performance** | Ativa plano de energia de alto desempenho | `powercfg /setactive` |
-| **Prioridade de Processo** | Aumenta prioridade de jogos/apps | PowerShell `Set-Process` |
-| **Limpeza de RAM** | Limpa standby list do Windows | EmptyStandbyList / WorkingSet trim |
-| **Clear Standby** | Libera memoria reservada pelo sistema | Elevacao UAC |
+<p align="center">
+  <img src="docs/screenshots/apps-real-icons.svg" alt="Real App Icons" width="100%"/>
+</p>
 
-Todas as otimizacoes:
-- Requerem elevacao via UAC (sudo-prompt)
-- Sao protegidas por rate limiting (cooldown + limite diario)
-- Alimentam o modelo ML com resultado (sucesso/falha)
-- Geram registro no historico para a IA
+- Extrai icones reais dos `.exe` via `app.getFileIcon()` convertidos para base64
+- Agrupa processos duplicados somando CPU/RAM
+- Top 12 apps ordenados por uso de CPU
+- Tooltip com caminho completo e metricas
 
 ---
 
-### 7. Coleta de Aplicativos
-
-| Fonte | Metodo | Limite |
-|-------|--------|--------|
-| **Apps Recentes** | Windows Recent Items (.lnk) | 20 |
-| **Jogos Instalados** | Scan de diretorios (Steam, Epic, etc) | 10 |
-| **Apps do Registro** | Registry HKLM/HKCU Uninstall | 15 |
-| **Em Execucao** | `systeminformation.processes()` + `getFileIcon()` | 12 |
-
-Caminhos de jogos monitorados:
-- `C:\Program Files (x86)\Steam\steamapps\common`
-- `C:\Program Files\Epic Games`
-- `C:\Games`
-- `%LOCALAPPDATA%\Programs`
-
----
-
-### 8. Rate Limiting e Controle de Uso
+### 7. Rate Limiting
 
 | Tipo | Cooldown | Limite Diario |
 |------|----------|---------------|
@@ -199,52 +193,53 @@ Caminhos de jogos monitorados:
 
 ```
 FixMe/
-|-- main.js                 # Processo principal Electron + IPC handlers
-|-- preload.js              # Context Bridge (IPC seguro)
-|-- dashboard.html          # Dashboard com UI completa
-|-- launch.js               # Launcher (resolve ELECTRON_RUN_AS_NODE)
-|-- package.json
-|-- .env                    # GEMINI_API_KEY
-|
-|-- src/
-    |-- hardware.js         # Monitoramento via systeminformation
-    |-- optimizations.js    # Otimizacoes do sistema (powercfg, priority)
-    |-- diagnostics.js      # 10 verificacoes de diagnostico
-    |-- ai-optimizer.js     # Integracao Google Gemini 2.0 Flash
-    |-- ml-engine.js        # Motor ML com algoritmo kNN
-    |-- suggestions.js      # Engine de sugestoes contextuais
-    |-- apps-collector.js   # Coleta de apps (recentes, jogos, registro)
-    |-- database.js         # Persistencia JSON (userData)
-    |-- request-params.js   # Rate limiting e cooldown
+├── main.js                 # Processo principal Electron + todos os IPC handlers
+├── preload.js              # Context Bridge (window.fixme.*)
+├── dashboard.html          # UI completa + ML inline (renderer)
+├── launch.js               # Remove ELECTRON_RUN_AS_NODE antes de spawnar
+├── install.ps1             # Instalador via PowerShell one-liner
+├── .env.example            # Template de configuracao
+├── build/
+│   └── icon.ico            # Icone multi-resolucao (256/128/64/48/32/16px)
+├── .github/
+│   └── workflows/
+│       └── release.yml     # CI/CD: build NSIS + GitHub Release automatico
+└── src/
+    ├── local-ml.js         # 5 modelos ML 100% locais (sem API)
+    ├── deep-ai.js          # Deep analysis multi-turn Gemini
+    ├── ai-optimizer.js     # Recomendacoes Gemini (lazy init)
+    ├── ml-engine.js        # kNN legado (compatibilidade)
+    ├── win-optimizer.js    # Otimizacoes profundas Windows (9 categorias)
+    ├── hardware.js         # Monitoramento via systeminformation
+    ├── optimizations.js    # Otimizacoes basicas (powercfg, priority, RAM)
+    ├── diagnostics.js      # 10 verificacoes automatizadas
+    ├── suggestions.js      # Engine de sugestoes contextuais
+    ├── apps-collector.js   # Coleta apps (recentes, jogos, registro)
+    ├── database.js         # Persistencia JSON unica (userData)
+    └── request-params.js   # Rate limiting e cooldown
 ```
 
 ### IPC Channels
 
-| Canal | Tipo | Descricao |
-|-------|------|-----------|
-| `hw:get-system-info` | invoke | Info estatica do sistema |
-| `hw:get-stats` | invoke | Metricas atuais + sugestoes |
-| `hw:start-monitoring` | invoke | Inicia monitoramento periodico |
-| `hw:stop-monitoring` | invoke | Para monitoramento |
-| `hw:stats-update` | event | Broadcast de metricas (a cada 2s) |
-| `ai:full-analysis` | invoke | Pipeline completa de analise (4 etapas) |
-| `ai:analysis-progress` | event | Progresso em tempo real |
-| `ai:get-smart-recommendations` | invoke | Recomendacoes Gemini |
-| `ai:learn-from-feedback` | invoke | Feedback do usuario |
-| `ai:suggest-game-optimization` | invoke | Otimizacao para jogo especifico |
-| `apps:get-running-with-icons` | invoke | Apps em execucao + icones reais |
-| `apps:get-gallery` | invoke | Todos os apps (recentes + jogos + instalados) |
-| `apps:get-recent` | invoke | Apenas apps recentes |
-| `apps:get-games` | invoke | Apenas jogos |
-| `diag:run-diagnostics` | invoke | Executa 10 verificacoes |
-| `diag:progress` | event | Progresso do diagnostico |
-| `ml:predict` | invoke | Predicao ML baseada no estado atual |
-| `ml:get-model-stats` | invoke | Estatisticas do modelo |
-| `ml:train-feedback` | invoke | Treinar com feedback |
-| `req:get-usage` | invoke | Estatisticas de uso |
-| `optim:set-high-performance` | invoke | Ativar High Performance |
-| `optim:set-process-priority` | invoke | Alterar prioridade |
-| `optim:clear-standby-list` | invoke | Limpar standby list |
+| Canal | Descricao |
+|-------|-----------|
+| `hw:get-stats` / `hw:stats-update` | Metricas em tempo real |
+| `hw:start-monitoring` / `hw:stop-monitoring` | Controle do loop |
+| `ai:full-analysis` / `ai:analysis-progress` | Pipeline Deep AI com progresso |
+| `ai:get-smart-recommendations` | Recomendacoes Gemini diretas |
+| `ml:predict` / `ml:get-model-stats` / `ml:train-feedback` | kNN legado |
+| `localml:tick` | Tick manual dos 5 modelos locais |
+| `localml:get-stats` | Estatisticas de todos os 5 modelos |
+| `localml:predict` | Predicao do OptimizationScorer |
+| `localml:record-outcome` | Registrar resultado antes/depois |
+| `localml:train-session` | Rotular sessao manualmente |
+| `winopt:full-optimization` | Bundle completo de otimizacoes |
+| `winopt:visual-effects` / `winopt:power-plan` / `winopt:gpu` … | Otimizacoes individuais |
+| `deepai:analyze` / `deepai:refine` / `deepai:bottleneck` | Deep AI sessions |
+| `deepai:analyze-processes` | Analise inteligente da lista de processos |
+| `diag:run-diagnostics` / `diag:progress` | Diagnostico com progresso |
+| `apps:get-running-with-icons` | Processos + icones reais |
+| `optim:set-high-performance` / `optim:clear-standby-list` … | Otimizacoes basicas |
 
 ---
 
@@ -254,76 +249,70 @@ FixMe/
 |-----------|--------|-----|
 | **Electron** | 28.3.3 | Framework desktop |
 | **Node.js** | 18.x | Runtime |
-| **systeminformation** | 5.16+ | Coleta de dados de hardware |
+| **systeminformation** | 5.16+ | Dados de hardware |
 | **@google/generative-ai** | 0.24+ | SDK Google Gemini |
-| **chart.js** | 3.9.1 | Graficos (reservado) |
 | **dotenv** | 16.4.7 | Variaveis de ambiente |
 | **sudo-prompt** | 9.2.1 | Elevacao UAC |
-| **electron-builder** | 26.7+ | Empacotamento |
+| **electron-builder** | 26.7+ | Empacotamento NSIS |
+| **chart.js** | 3.9.1 | Graficos |
 
 ---
 
-## Instalacao
+## Instalacao para Desenvolvimento
 
 ### Pre-requisitos
-- Windows 10 ou 11
+- Windows 10 ou 11 (64-bit)
 - Node.js 18+
-- npm
-
-### Setup
 
 ```bash
-# Clonar o repositorio
 git clone https://github.com/leosan123456/FixMe.git
 cd FixMe
-
-# Instalar dependencias
 npm install
-
-# Configurar chave API Gemini
-# Crie o arquivo .env na raiz:
-echo GEMINI_API_KEY=sua_chave_aqui > .env
-```
-
-> Obtenha sua chave em: https://aistudio.google.com/apikey
-
-### Executar
-
-```bash
-# Modo desenvolvimento
-npm run dev
-
-# Ou
+cp .env.example .env
+# Edite .env e adicione sua GEMINI_API_KEY
 npm start
 ```
 
-> **Nota:** O launcher (`launch.js`) remove automaticamente a variavel `ELECTRON_RUN_AS_NODE` do ambiente para garantir que o Electron inicie corretamente.
+> Obtenha sua chave Gemini gratuitamente em: https://aistudio.google.com/apikey
 
-### Build para distribuicao
+### Configuracao da chave Gemini pos-instalacao
+
+Crie o arquivo `%APPDATA%\FixMe\.env` com o conteudo:
+
+```env
+GEMINI_API_KEY=sua_chave_aqui
+```
+
+O app carrega esse arquivo automaticamente. Sem a chave, todas as funcionalidades locais (ML, monitoramento, otimizacoes) continuam funcionando normalmente — apenas as analises Gemini ficam indisponiveis.
+
+### Build
 
 ```bash
-# Gerar executavel
-npm run dist
+npm run dist      # Gera instalador NSIS .exe em /dist
+npm run pack      # Dir-only (sem installer, mais rapido)
+npm run release   # Build + publica no GitHub Releases
+```
+
+### CI/CD
+
+Push de qualquer tag `v*.*.*` dispara o workflow `.github/workflows/release.yml` que:
+1. Builda o instalador no `windows-latest`
+2. Cria automaticamente uma GitHub Release com o `.exe`
+
+```bash
+git tag v1.1.0 && git push origin v1.1.0
 ```
 
 ---
 
-## Configuracao
+## Seguranca
 
-### .env
-
-```env
-GEMINI_API_KEY=AIzaSy...    # Chave da API Google Gemini
-NODE_ENV=development         # development | production
-```
-
-### Seguranca
-
-- **Context Isolation** habilitado - renderer nao acessa Node.js diretamente
-- **nodeIntegration** desabilitado - tudo passa pelo `preload.js`
+- **Context Isolation** habilitado — renderer sem acesso direto ao Node.js
+- **nodeIntegration** desabilitado — tudo passa pelo `preload.js`
 - **IPC seguro** via `contextBridge.exposeInMainWorld()`
 - **Elevacao UAC** para todas as operacoes de sistema
 - **Rate limiting** para prevenir abuso de API e operacoes
+- **ML 100% local** — nenhum dado de hardware e enviado para servidores externos
 
 ---
 
@@ -345,10 +334,10 @@ NODE_ENV=development         # development | production
 
 ## Licenca
 
-MIT License - veja [LICENSE](LICENSE) para detalhes.
+MIT License — veja [LICENSE](LICENSE) para detalhes.
 
 ---
 
 <p align="center">
-  Feito com Electron + Gemini AI + Machine Learning
+  Feito com Electron · Gemini AI · Machine Learning Local · Windows Optimization
 </p>
