@@ -109,7 +109,17 @@ class HardwareMonitor {
       };
     } catch (err) {
       console.error('Erro ao obter stats:', err);
-      throw err;
+      // Return safe defaults instead of throwing — prevents main-process crash
+      return {
+        timestamp: new Date().toISOString(),
+        cpu:    { current: 0, cores: [], history: [] },
+        memory: { current: 0, used: 0, total: 0, free: 0, history: [] },
+        gpu:    { current: 0, history: [] },
+        topCpuProcesses: [],
+        topMemoryProcesses: [],
+        processCount: 0,
+        error: String(err)
+      };
     }
   }
 }

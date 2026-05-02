@@ -1,6 +1,6 @@
 {
   "name": "fixme",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "FixMe - Windows optimization tool for games",
   "main": "main.js",
   "scripts": {
@@ -79,6 +79,10 @@
       "uninstallerIcon": "build/icon.ico"
     },
     "extraResources": [
+      {
+        "from": ".env",
+        "to": ".env"
+      },
       {
         "from": ".env.example",
         "to": ".env.example"

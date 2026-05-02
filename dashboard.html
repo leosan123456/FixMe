@@ -2947,14 +2947,15 @@
                     const statsRes = await window.fixme.getHardwareStats();
                     if (statsRes && statsRes.success && statsRes.data && statsRes.data.stats) {
                         const s = statsRes.data.stats;
-                        cpuPct = s.cpuUsage  || cpuPct;
-                        ramPct = s.memoryUsage || ramPct;
-                        gpuPct = s.gpuUsage  || gpuPct;
+                        cpuPct = parseFloat(s.cpu?.current  || 0) || cpuPct;
+                        ramPct = parseFloat(s.memory?.current || 0) || ramPct;
+                        gpuPct = parseFloat(s.gpu?.current  || 0) || gpuPct;
                         hwState.cpu.current    = cpuPct;
                         hwState.memory.current = ramPct;
                         hwState.gpu.current    = gpuPct;
                         hwState.processCount   = s.processCount || hwState.processCount;
-                        hwState.memory.used    = Math.round(hwState.memory.total * (ramPct / 100) * 10) / 10;
+                        hwState.memory.total   = parseFloat(s.memory?.total || hwState.memory.total);
+                        hwState.memory.used    = parseFloat(s.memory?.used  || 0) || Math.round(hwState.memory.total * (ramPct / 100) * 10) / 10;
                         updateHardwareUI();
                     }
                     const resColor = cpuPct < 80 && ramPct < 85 ? 'ok' : 'warn';
@@ -3052,12 +3053,14 @@
                 try {
                     await window.fixme.startMonitoring(2000);
                     window.fixme.onStatsUpdate((data) => {
-                        if (data.stats) {
-                            hwState.cpu.current    = data.stats.cpuUsage    || hwState.cpu.current;
-                            hwState.memory.current = data.stats.memoryUsage || hwState.memory.current;
-                            hwState.gpu.current    = data.stats.gpuUsage    || hwState.gpu.current;
-                            hwState.memory.used    = Math.round(hwState.memory.total * (hwState.memory.current / 100) * 10) / 10;
-                            hwState.processCount   = data.stats.processCount || hwState.processCount;
+                        if (data && data.stats) {
+                            const s = data.stats;
+                            hwState.cpu.current    = parseFloat(s.cpu?.current    || 0) || hwState.cpu.current;
+                            hwState.memory.current = parseFloat(s.memory?.current || 0) || hwState.memory.current;
+                            hwState.gpu.current    = parseFloat(s.gpu?.current    || 0) || hwState.gpu.current;
+                            hwState.memory.total   = parseFloat(s.memory?.total   || hwState.memory.total);
+                            hwState.memory.used    = parseFloat(s.memory?.used    || 0) || Math.round(hwState.memory.total * (hwState.memory.current / 100) * 10) / 10;
+                            hwState.processCount   = s.processCount || hwState.processCount;
                             updateHardwareUI();
                         }
                     });

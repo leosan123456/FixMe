@@ -1,16 +1,35 @@
 const path0 = require('path');
 const fs0   = require('fs');
-// In production, look for .env in userData (writable); fall back to project root for dev
+const os0   = require('os');
+
+// ── Crash logging (runs before anything else) ────────────────────────────────
+const _crashLog = path0.join(os0.tmpdir(), 'fixme-crash.log');
+function _log(tag, err) {
+  try {
+    const line = `[${new Date().toISOString()}] ${tag}: ${err && err.stack ? err.stack : String(err)}\n`;
+    fs0.appendFileSync(_crashLog, line);
+  } catch (_) {}
+}
+process.on('uncaughtException',  (err) => { _log('UNCAUGHT', err); });
+process.on('unhandledRejection', (r)   => { _log('UNHANDLED', r); });
+
+// ── .env loading ─────────────────────────────────────────────────────────────
 function _loadEnv() {
+  // 1. Project root (development)
   const local = path0.join(__dirname, '.env');
   if (fs0.existsSync(local)) return local;
+  // 2. Packaged: extraResources injects .env next to app.asar
+  if (process.resourcesPath) {
+    const res = path0.join(process.resourcesPath, '.env');
+    if (fs0.existsSync(res)) return res;
+  }
   return null;
 }
 const _envPath = _loadEnv();
 if (_envPath) require('dotenv').config({ path: _envPath });
+
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const isDev = process.env.NODE_ENV !== 'production';
 const optim = require('./src/optimizations');
 const HardwareMonitor = require('./src/hardware');
 const SuggestionsEngine = require('./src/suggestions');
@@ -41,29 +60,57 @@ let mainWindow = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 600,
+    width: 1100,
+    height: 720,
+    minWidth: 900,
+    minHeight: 600,
+    show: false,
+    backgroundColor: '#020917',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      devTools: !app.isPackaged
     }
   });
-  mainWindow.loadFile('dashboard.html');
-  if (isDev) mainWindow.webContents.openDevTools();
+
+  // Show window only when fully rendered (no white flash)
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.focus();
+  });
+
+  // Log renderer load failures to the crash file
+  mainWindow.webContents.on('did-fail-load', (_, code, desc) => {
+    _log('RENDERER_FAIL', `code=${code} desc=${desc}`);
+    // Retry once with absolute path
+    mainWindow.loadFile(path.join(__dirname, 'dashboard.html'));
+  });
+
+  mainWindow.webContents.on('render-process-gone', (_, details) => {
+    _log('RENDERER_GONE', JSON.stringify(details));
+  });
+
+  mainWindow.loadFile(path.join(__dirname, 'dashboard.html'));
+
+  if (!app.isPackaged) mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
-  // In packaged builds, also try loading .env from userData (user-editable location)
-  const userEnv = path0.join(app.getPath('userData'), '.env');
-  if (fs0.existsSync(userEnv)) require('dotenv').config({ path: userEnv, override: true });
+  // userData .env overrides the bundled one (user can add their own API key here)
+  try {
+    const userEnv = path0.join(app.getPath('userData'), '.env');
+    if (fs0.existsSync(userEnv)) require('dotenv').config({ path: userEnv, override: true });
+  } catch (e) { _log('ENV_LOAD', e); }
 
-  db.initDatabase();
+  try { db.initDatabase(); } catch (e) { _log('DB_INIT', e); }
+
   createWindow();
-  app.on('activate', function () {
+
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-});
+}).catch(err => _log('APP_READY', err));
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
