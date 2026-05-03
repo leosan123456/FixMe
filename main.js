@@ -43,16 +43,17 @@ const winOptimizerModule = require('./src/win-optimizer');
 const DeepAI = require('./src/deep-ai');
 const LocalMLHub = require('./src/local-ml');
 
-const hwMonitor = new HardwareMonitor();
-const suggestionsEngine = new SuggestionsEngine();
-const aiOptimizer = new AIOptimizer();
-const appsCollector = new AppsCollector();
-const diagnostics = new SystemDiagnostics();
-const mlEngine = new MLEngine();
-const requestParams = new RequestParams();
+let hwMonitor, suggestionsEngine, aiOptimizer, appsCollector, diagnostics, mlEngine, requestParams, deepAI, localML;
+try { hwMonitor       = new HardwareMonitor();    } catch(e) { _log('INIT_HW', e);   hwMonitor       = { getHardwareStats: async () => ({ cpu:{current:0,cores:[],history:[]}, memory:{current:0,used:0,total:0,free:0,history:[]}, gpu:{current:0,history:[]}, topCpuProcesses:[], topMemoryProcesses:[], processCount:0 }), getSystemInfo: async () => ({}) }; }
+try { suggestionsEngine = new SuggestionsEngine(); } catch(e) { _log('INIT_SUGG', e); suggestionsEngine = { getSuggestions: () => [] }; }
+try { aiOptimizer     = new AIOptimizer();        } catch(e) { _log('INIT_AI', e);   aiOptimizer     = {}; }
+try { appsCollector   = new AppsCollector();      } catch(e) { _log('INIT_APPS', e); appsCollector   = { getRunningApps: async () => [] }; }
+try { diagnostics     = new SystemDiagnostics();  } catch(e) { _log('INIT_DIAG', e); diagnostics     = { runDiagnostics: async () => [] }; }
+try { mlEngine        = new MLEngine();            } catch(e) { _log('INIT_ML', e);  mlEngine        = { train: () => {}, predict: () => [] }; }
+try { requestParams   = new RequestParams();       } catch(e) { _log('INIT_RP', e);  requestParams   = { canExecute: () => ({allowed:true}), logRequest: () => {} }; }
+try { deepAI          = new DeepAI();              } catch(e) { _log('INIT_DAI', e); deepAI          = { analyze: async () => ({}), recordPattern: () => {} }; }
+try { localML         = new LocalMLHub();          } catch(e) { _log('INIT_LML', e); localML         = { tick: () => ({}), recordOutcome: () => {}, predict: () => null, getStats: () => ({}) }; }
 const winOptimizer = winOptimizerModule;
-const deepAI = new DeepAI();
-const localML = new LocalMLHub();
 let monitorInterval = null;
 // snapshot of stats taken just before an optimization (for before/after delta)
 let statsBeforeOptimization = null;
@@ -64,7 +65,7 @@ function createWindow() {
     height: 720,
     minWidth: 900,
     minHeight: 600,
-    show: false,
+    show: true,
     backgroundColor: '#020917',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -74,17 +75,8 @@ function createWindow() {
     }
   });
 
-  // Show window only when fully rendered (no white flash)
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    mainWindow.focus();
-  });
-
-  // Log renderer load failures to the crash file
   mainWindow.webContents.on('did-fail-load', (_, code, desc) => {
     _log('RENDERER_FAIL', `code=${code} desc=${desc}`);
-    // Retry once with absolute path
-    mainWindow.loadFile(path.join(__dirname, 'dashboard.html'));
   });
 
   mainWindow.webContents.on('render-process-gone', (_, details) => {

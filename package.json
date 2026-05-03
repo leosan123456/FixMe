@@ -1,6 +1,6 @@
 {
   "name": "fixme",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "FixMe - Windows optimization tool for games",
   "main": "main.js",
   "scripts": {
@@ -61,7 +61,7 @@
           "arch": ["x64"]
         }
       ],
-      "requestedExecutionLevel": "requireAdministrator",
+      "requestedExecutionLevel": "highestAvailable",
       "icon": "build/icon.ico"
     },
     "nsis": {
