@@ -11,6 +11,17 @@ class HardwareMonitor {
       gpu: []
     };
     this.maxHistoryLength = 30; // últimos 30 pontos de dados
+
+    try {
+      const NativeTelemetry = require('./native-telemetry');
+      this.native = new NativeTelemetry();
+    } catch (_) {
+      this.native = { getMetrics: async () => ({ gpu: null, cpu: null }), getCapabilities: () => ({ available: false, reason: 'load_failed' }) };
+    }
+  }
+
+  getNativeCapabilities() {
+    return this.native.getCapabilities();
   }
 
   addToHistory(type, value) {
@@ -45,18 +56,23 @@ class HardwareMonitor {
 
   async getHardwareStats() {
     try {
-      const [cpuLoad, memory, gpu, processes] = await Promise.all([
+      const [cpuLoad, memory, gpu, processes, native] = await Promise.all([
         si.currentLoad(),
         si.mem(),
         si.graphics().catch(() => ({ controllers: [] })),
-        si.processes()
+        si.processes(),
+        this.native.getMetrics().catch(() => ({ gpu: null, cpu: null }))
       ]);
 
-      const cpuPercent = cpuLoad.currentLoad || 0;
+      // Prefer real PDH-based readings (native.js, via koffi) when available.
+      // Fallback: CPU from systeminformation's currentLoad; GPU from the VRAM
+      // usage ratio, which is a proxy for load, not real GPU utilization.
+      const cpuPercent = native.cpu !== null && native.cpu !== undefined ? native.cpu : (cpuLoad.currentLoad || 0);
       const memPercent = memory.total ? (memory.used / memory.total) * 100 : 0;
-      const gpuPercent = gpu.controllers && gpu.controllers[0] && gpu.controllers[0].memoryTotal
+      const vramGpuPercent = gpu.controllers && gpu.controllers[0] && gpu.controllers[0].memoryTotal
         ? gpu.controllers[0].memoryUsed / gpu.controllers[0].memoryTotal * 100
         : 0;
+      const gpuPercent = native.gpu !== null && native.gpu !== undefined ? native.gpu : vramGpuPercent;
 
       // Armazena histórico para gráficos
       this.addToHistory('cpu', cpuPercent);

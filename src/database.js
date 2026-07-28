@@ -15,7 +15,8 @@ let database = {
   user_feedback: [],
   ml_training_data: [],
   request_log: [],
-  local_ml_state: null
+  local_ml_state: null,
+  user_profile: null
 };
 
 function initDatabase() {
@@ -27,6 +28,7 @@ function initDatabase() {
       if (!database.ml_training_data) database.ml_training_data = [];
       if (!database.request_log) database.request_log = [];
       if (!database.local_ml_state) database.local_ml_state = null;
+      if (!database.user_profile) database.user_profile = null;
     } catch (err) {
       console.error('Erro ao carregar banco de dados:', err);
       database = {
@@ -89,6 +91,23 @@ function recordHardwareProfile(cpuModel, cpuCores, totalMemGb, gpuModel, osVersi
 
 function getHardwareProfile() {
   return database.hardware_profile;
+}
+
+// ── User Profile (declarado pelo usuário no onboarding) ──
+function recordUserProfile(profile) {
+  database.user_profile = {
+    usageType: profile.usageType,
+    priority: profile.priority,
+    favoriteApps: profile.favoriteApps || '',
+    peakHours: profile.peakHours || [],
+    updatedAt: new Date().toISOString()
+  };
+  saveDatabase();
+  return true;
+}
+
+function getUserProfile() {
+  return database.user_profile;
 }
 
 // ── AI ──
@@ -189,6 +208,8 @@ module.exports = {
   recordUserFeedback,
   getOptimizationHistory,
   getHardwareProfile,
+  recordUserProfile,
+  getUserProfile,
   getSuccessRate,
   getTopRecommendations,
   markRecommendationApplied,

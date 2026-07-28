@@ -44,7 +44,7 @@ const DeepAI = require('./src/deep-ai');
 const LocalMLHub = require('./src/local-ml');
 
 let hwMonitor, suggestionsEngine, aiOptimizer, appsCollector, diagnostics, mlEngine, requestParams, deepAI, localML;
-try { hwMonitor       = new HardwareMonitor();    } catch(e) { _log('INIT_HW', e);   hwMonitor       = { getHardwareStats: async () => ({ cpu:{current:0,cores:[],history:[]}, memory:{current:0,used:0,total:0,free:0,history:[]}, gpu:{current:0,history:[]}, topCpuProcesses:[], topMemoryProcesses:[], processCount:0 }), getSystemInfo: async () => ({}) }; }
+try { hwMonitor       = new HardwareMonitor();    } catch(e) { _log('INIT_HW', e);   hwMonitor       = { getHardwareStats: async () => ({ cpu:{current:0,cores:[],history:[]}, memory:{current:0,used:0,total:0,free:0,history:[]}, gpu:{current:0,history:[]}, topCpuProcesses:[], topMemoryProcesses:[], processCount:0 }), getSystemInfo: async () => ({}), getNativeCapabilities: () => ({ available:false, reason:'init_failed' }) }; }
 try { suggestionsEngine = new SuggestionsEngine(); } catch(e) { _log('INIT_SUGG', e); suggestionsEngine = { getSuggestions: () => [] }; }
 try { aiOptimizer     = new AIOptimizer();        } catch(e) { _log('INIT_AI', e);   aiOptimizer     = {}; }
 try { appsCollector   = new AppsCollector();      } catch(e) { _log('INIT_APPS', e); appsCollector   = { getRunningApps: async () => [] }; }
@@ -52,7 +52,7 @@ try { diagnostics     = new SystemDiagnostics();  } catch(e) { _log('INIT_DIAG',
 try { mlEngine        = new MLEngine();            } catch(e) { _log('INIT_ML', e);  mlEngine        = { train: () => {}, predict: () => [] }; }
 try { requestParams   = new RequestParams();       } catch(e) { _log('INIT_RP', e);  requestParams   = { canExecute: () => ({allowed:true}), logRequest: () => {} }; }
 try { deepAI          = new DeepAI();              } catch(e) { _log('INIT_DAI', e); deepAI          = { analyze: async () => ({}), recordPattern: () => {} }; }
-try { localML         = new LocalMLHub();          } catch(e) { _log('INIT_LML', e); localML         = { tick: () => ({}), recordOutcome: () => {}, predict: () => null, getStats: () => ({}) }; }
+try { localML         = new LocalMLHub();          } catch(e) { _log('INIT_LML', e); localML         = { tick: () => ({}), recordOutcome: () => {}, predict: () => null, getStats: () => ({}), reloadDeclaredProfile: () => {} }; }
 const winOptimizer = winOptimizerModule;
 let monitorInterval = null;
 // snapshot of stats taken just before an optimization (for before/after delta)
@@ -236,6 +236,42 @@ ipcMain.handle('hw:stop-monitoring', async () => {
     monitorInterval = null;
   }
   return { success: true, message: 'Monitoramento parado' };
+});
+
+ipcMain.handle('hw:native-capabilities', async () => {
+  try {
+    return { success: true, data: hwMonitor.getNativeCapabilities() };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+// ===== User Profile =====
+const VALID_USAGE_TYPES = ['Gamer', 'Trabalho', 'Misto'];
+const VALID_PRIORITIES = ['performance', 'balanced', 'quiet'];
+
+ipcMain.handle('profile:get', async () => {
+  try {
+    return { success: true, data: db.getUserProfile() };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+});
+
+ipcMain.handle('profile:save', async (_, profile) => {
+  try {
+    if (!profile || !VALID_USAGE_TYPES.includes(profile.usageType)) {
+      return { success: false, error: 'usageType inválido' };
+    }
+    if (!VALID_PRIORITIES.includes(profile.priority)) {
+      return { success: false, error: 'priority inválido' };
+    }
+    db.recordUserProfile(profile);
+    localML.reloadDeclaredProfile();
+    return { success: true, data: db.getUserProfile() };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
 });
 
 // ===== AI Optimizer =====

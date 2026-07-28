@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('fixme', {
   getHardwareStats: () => ipcRenderer.invoke('hw:get-stats'),
   startMonitoring: (intervalMs = 2000) => ipcRenderer.invoke('hw:start-monitoring', intervalMs),
   stopMonitoring: () => ipcRenderer.invoke('hw:stop-monitoring'),
+  getNativeCapabilities: () => ipcRenderer.invoke('hw:native-capabilities'),
 
   // AI Optimizer
   getSmartRecommendations: () => ipcRenderer.invoke('ai:get-smart-recommendations'),
@@ -66,6 +67,10 @@ contextBridge.exposeInMainWorld('fixme', {
   localMLTick:          ()               => ipcRenderer.invoke('localml:tick'),
   localMLRecordOutcome: (type, before, after, rating) => ipcRenderer.invoke('localml:record-outcome', type, before, after, rating),
   localMLTrainSession:  (label)          => ipcRenderer.invoke('localml:train-session', label),
+
+  // User Profile
+  getProfile: () => ipcRenderer.invoke('profile:get'),
+  saveProfile: (profile) => ipcRenderer.invoke('profile:save', profile),
 
   // Deep AI
   deepAIAnalyze: (userContext) => ipcRenderer.invoke('deepai:analyze', userContext),

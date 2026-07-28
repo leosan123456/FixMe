@@ -54,11 +54,17 @@
       "buildResources": "build",
       "output": "dist"
     },
+    "asarUnpack": [
+      "node_modules/koffi/**/*",
+      "node_modules/@koromix/**/*"
+    ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "requestedExecutionLevel": "highestAvailable",
@@ -100,6 +106,7 @@
     "chart.js": "^3.9.1",
     "dotenv": "^16.4.7",
     "electron-is-dev": "^3.0.1",
+    "koffi": "^3.1.2",
     "sudo-prompt": "^9.2.1",
     "systeminformation": "^5.16.0"
   },

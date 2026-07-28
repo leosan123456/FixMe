@@ -163,19 +163,25 @@ class PerformanceForecast {
 
 const PROFILE_NAMES = ['Gamer', 'Trabalho', 'Idle', 'Misto'];
 
+// Archetype centroids — stable reference points independent of the drifting
+// `this.centroids`, used both as the initial state and as the target that
+// seedFromDeclaredProfile() nudges a centroid back towards.
+const DEFAULT_CENTROIDS = [
+  [0.70, 0.70, 0.80, 0.30, 0.75],  // Gamer
+  [0.50, 0.60, 0.10, 0.40, 0.42],  // Trabalho
+  [0.10, 0.30, 0.05, 0.10, 0.25],  // Idle
+  [0.40, 0.50, 0.30, 0.30, 0.50]   // Misto
+];
+
 class UserProfileCluster {
   constructor() {
     this.k = 4;
     // Centroids: [cpu/100, mem/100, gpu/100, processCount/500, hour/24]
-    this.centroids = [
-      [0.70, 0.70, 0.80, 0.30, 0.75],  // Gamer
-      [0.50, 0.60, 0.10, 0.40, 0.42],  // Trabalho
-      [0.10, 0.30, 0.05, 0.10, 0.25],  // Idle
-      [0.40, 0.50, 0.30, 0.30, 0.50]   // Misto
-    ];
+    this.centroids = DEFAULT_CENTROIDS.map(c => [...c]);
     this.counts   = [0, 0, 0, 0];
     this.history  = [];
     this.lr       = 0.05;
+    this._seededFor = null;
   }
 
   _feat(cpu, mem, gpu, procCount, hour) {
@@ -209,6 +215,22 @@ class UserProfileCluster {
     return this._nearest(this._feat(cpu, mem, gpu, procCount, hour));
   }
 
+  // Bias the matching centroid toward its archetype using a declared user
+  // profile as a prior, without discarding what has already been learned.
+  // Idempotent per declared name unless force:true (re-applied on profile edit).
+  seedFromDeclaredProfile(name, { force = false } = {}) {
+    const idx = PROFILE_NAMES.indexOf(name);
+    if (idx < 0 || name === 'Idle') return false;
+    if (this._seededFor === name && !force) return false;
+
+    const target = DEFAULT_CENTROIDS[idx];
+    const c = this.centroids[idx];
+    for (let d = 0; d < c.length; d++) c[d] = c[d] + 0.3 * (target[d] - c[d]);
+    this.counts[idx] += 20; // virtual prior weight, reflected in getStats()
+    this._seededFor = name;
+    return true;
+  }
+
   getStats() {
     const total = this.counts.reduce((s, c) => s + c, 0);
     return {
@@ -235,7 +257,8 @@ class UserProfileCluster {
       centroids: this.centroids,
       counts:    this.counts,
       history:   this.history.slice(-100),
-      lr:        this.lr
+      lr:        this.lr,
+      seededFor: this._seededFor
     };
   }
 
@@ -245,6 +268,7 @@ class UserProfileCluster {
     if (d.counts)   this.counts   = d.counts;
     if (d.history)  this.history  = d.history;
     if (d.lr)       this.lr       = d.lr;
+    if (d.seededFor !== undefined) this._seededFor = d.seededFor;
   }
 }
 
@@ -263,7 +287,7 @@ class SessionClassifier {
     this.recentPredictions = [];
   }
 
-  _features(cpu, mem, gpu, procs = []) {
+  _features(cpu, mem, gpu, procs = [], extra = {}) {
     const names = procs.map(p => (p.name || '').toLowerCase());
     const has = keywords => names.some(n => keywords.some(k => n.includes(k)));
     return {
@@ -271,8 +295,10 @@ class SessionClassifier {
       memBand:    mem > 70 ? 'hi' : mem > 40 ? 'mid' : 'lo',
       gpuBand:    gpu > 50 ? 'hi' : gpu > 15 ? 'mid' : 'lo',
       cpuGpuHigh: (cpu > 50 && gpu > 40) ? 'y' : 'n',
-      hasGame:    has(['steam', 'epicgames', 'gamebarpresence', 'origin', 'uplay', 'battle']) ? 'y' : 'n',
-      hasWork:    has(['code', 'devenv', 'node', 'python', 'cmd', 'powershell', 'idea']) ? 'y' : 'n',
+      // extra.game/extra.work let a user's declared favorite apps (which may not
+      // be in these hardcoded keyword lists) contribute to detection.
+      hasGame:    has(['steam', 'epicgames', 'gamebarpresence', 'origin', 'uplay', 'battle', ...(extra.game || [])]) ? 'y' : 'n',
+      hasWork:    has(['code', 'devenv', 'node', 'python', 'cmd', 'powershell', 'idea', ...(extra.work || [])]) ? 'y' : 'n',
       hasBrowser: has(['chrome', 'firefox', 'msedge', 'opera', 'brave']) ? 'y' : 'n',
       hasMedia:   has(['vlc', 'spotify', 'wmplayer', 'mpc', 'potplayer']) ? 'y' : 'n'
     };
@@ -290,8 +316,8 @@ class SessionClassifier {
     }
   }
 
-  classify(cpu, mem, gpu, procs = []) {
-    const f = this._features(cpu, mem, gpu, procs);
+  classify(cpu, mem, gpu, procs = [], extra = {}) {
+    const f = this._features(cpu, mem, gpu, procs, extra);
     const logScores = {};
     for (const cls of SESSION_TYPES) {
       let score = Math.log((this.classCounts[cls] || 1) / this.totalSamples);
@@ -351,6 +377,17 @@ class SessionClassifier {
 //    for the current machine state, based on past outcomes.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Small, capped nudge applied to known optimization types (see ml-engine.js
+// getTypeLabel() for the canonical vocabulary) when the user has declared a
+// priority preference. 'performance' favors aggressive types; 'quiet' penalizes
+// them (there is no dedicated low-impact type to boost instead); 'balanced' is neutral.
+const PRIORITY_TYPE_BIAS = {
+  performance: { high_performance: 1, clear_ram: 1, game_optimization: 1 },
+  quiet:       { high_performance: -1, clear_ram: -0.5, game_optimization: -0.5 },
+  balanced:    {}
+};
+const PRIORITY_BOOST_AMOUNT = 0.05;
+
 class OptimizationScorer {
   constructor(k = 7) {
     this.k       = k;
@@ -386,7 +423,7 @@ class OptimizationScorer {
     if (this.samples.length > 2000) this.samples = this.samples.slice(-2000);
   }
 
-  predict(stats, trends = {}) {
+  predict(stats, trends = {}, priorityBias = null) {
     if (this.samples.length < 3) {
       return { predictions: [], confidence: 0, message: 'Dados insuficientes (mín. 3 amostras)' };
     }
@@ -415,9 +452,10 @@ class OptimizationScorer {
       agg[type].n++;
     }
 
+    const bias = PRIORITY_TYPE_BIAS[priorityBias] || {};
     const predictions = Object.entries(agg).map(([type, a]) => ({
       type,
-      score:            Math.round(a.ws / a.wt * 100) / 100,
+      score:            clamp(Math.round(a.ws / a.wt * 100) / 100 + PRIORITY_BOOST_AMOUNT * (bias[type] || 0), 0, 1),
       estimatedCpuDrop: Math.round(a.wCpu / a.wt),
       estimatedMemDrop: Math.round(a.wMem / a.wt),
       estimatedGpuDrop: Math.round(a.wGpu / a.wt),
@@ -455,6 +493,26 @@ class OptimizationScorer {
   }
 }
 
+// Pure helper — buckets a declared user profile's comma-separated favorite-apps
+// string into { game, work } keyword lists, per the declared usage type, for
+// SessionClassifier's `extra` param. Exported for unit testing.
+function splitFavoriteApps(profile) {
+  const result = { game: [], work: [] };
+  if (!profile || !profile.favoriteApps) return result;
+
+  const tokens = String(profile.favoriteApps)
+    .split(',')
+    .map(t => t.trim().toLowerCase())
+    .filter(Boolean);
+  if (!tokens.length) return result;
+
+  if (profile.usageType === 'Gamer') result.game = tokens;
+  else if (profile.usageType === 'Trabalho') result.work = tokens;
+  else if (profile.usageType === 'Misto') { result.game = tokens; result.work = tokens; }
+
+  return result;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LocalMLHub — orchestrates all 5 models + debounced DB persistence
 // ─────────────────────────────────────────────────────────────────────────────
@@ -468,6 +526,8 @@ class LocalMLHub {
     this.optimizer = new OptimizationScorer();
     this._loaded   = false;
     this._timer    = null;
+    this.declaredProfile   = null;
+    this._favoriteKeywords = { game: [], work: [] };
   }
 
   load() {
@@ -481,6 +541,26 @@ class LocalMLHub {
       this.optimizer.deserialize(state.optimizer);
     }
     this._loaded = true;
+    this._applyDeclaredProfile(false);
+  }
+
+  // Pulls the declared user profile (from the onboarding questionnaire) and
+  // applies it as a prior to the relevant models. `force` re-seeds the cluster
+  // centroid even if it was already seeded for this profile (used after an edit).
+  _applyDeclaredProfile(force) {
+    let profile = null;
+    try { profile = db.getUserProfile(); } catch (_) { /* not available outside Electron */ }
+    this.declaredProfile = profile;
+    this._favoriteKeywords = splitFavoriteApps(profile);
+    if (profile && profile.usageType) this.cluster.seedFromDeclaredProfile(profile.usageType, { force });
+  }
+
+  // Called explicitly after the user saves/edits their profile via IPC, so the
+  // bias is re-applied immediately instead of waiting for the next process start.
+  reloadDeclaredProfile() {
+    this.load();
+    this._applyDeclaredProfile(true);
+    this._save();
   }
 
   _save() {
@@ -517,7 +597,7 @@ class LocalMLHub {
       anomaly:  this.anomaly.detect(cpu, mem, gpu),
       forecast: this.forecast.predict(nextHour, now.getDay()),
       profile:  this.cluster.classify(cpu, mem, gpu, procs, now.getHours()),
-      session:  this.session.classify(cpu, mem, gpu, processes)
+      session:  this.session.classify(cpu, mem, gpu, processes, this._favoriteKeywords)
     };
   }
 
@@ -548,7 +628,7 @@ class LocalMLHub {
   // Ask the scorer which optimization is recommended for the current state.
   predictOptimization(stats, trends = {}) {
     this.load();
-    return this.optimizer.predict(stats, trends);
+    return this.optimizer.predict(stats, trends, this.declaredProfile?.priority || null);
   }
 
   // Returns stats for all 5 models (for the UI dashboard).
@@ -565,3 +645,8 @@ class LocalMLHub {
 }
 
 module.exports = LocalMLHub;
+module.exports.splitFavoriteApps = splitFavoriteApps;
+module.exports.UserProfileCluster = UserProfileCluster;
+module.exports.OptimizationScorer = OptimizationScorer;
+module.exports.SessionClassifier = SessionClassifier;
+module.exports.PROFILE_NAMES = PROFILE_NAMES;

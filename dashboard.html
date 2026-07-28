@@ -1290,6 +1290,117 @@
         .deepai-pred-val { font-size: 1.3rem; font-weight: 700; color: #a78bfa; }
         .deepai-pred-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
 
+        /* User Profile Overlay */
+        .profile-overlay {
+            display: none;
+            opacity: 0;
+            visibility: hidden;
+            overflow-y: auto;
+            padding: 2rem 1rem;
+        }
+        .profile-overlay.show {
+            display: flex;
+            opacity: 1;
+            visibility: visible;
+        }
+        .profile-box { width: 440px; max-width: 100%; }
+        .profile-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+        .profile-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 1.75rem;
+            line-height: 1.4;
+        }
+        .profile-field { width: 100%; margin-bottom: 1.25rem; }
+        .profile-field-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+        }
+        .profile-radio-group, .profile-checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .profile-radio, .profile-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.85rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
+        }
+        .profile-radio:has(input:checked), .profile-checkbox:has(input:checked) {
+            border-color: var(--accent-orange);
+            background: rgba(245, 111, 16, 0.08);
+            color: var(--accent-orange);
+        }
+        .profile-radio input, .profile-checkbox input { accent-color: var(--accent-orange); }
+        .profile-text-input {
+            width: 100%;
+            padding: 0.6rem 0.85rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.82rem;
+        }
+        .profile-text-input:focus { outline: none; border-color: var(--accent-orange); }
+        .profile-save-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, var(--accent-orange), #ff8c42);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .profile-save-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,111,16,0.35); }
+        .profile-save-btn svg { width: 16px; height: 16px; }
+        .profile-skip-btn {
+            width: 100%;
+            padding: 0.6rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.78rem;
+            cursor: pointer;
+            margin-top: 0.4rem;
+        }
+        .profile-skip-btn:hover { color: var(--text-secondary); }
+        .gpu-native-badge {
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 0.1rem 0.4rem;
+            border-radius: 8px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            vertical-align: middle;
+            margin-left: 0.35rem;
+        }
+        .gpu-native-badge.off { background: rgba(107, 122, 144, 0.15); color: var(--text-muted); }
+
         /* Toast */
         .winopt-toast {
             position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
@@ -1364,6 +1475,61 @@
         </div>
     </div>
 
+    <!-- User Profile Overlay (onboarding + later editing) -->
+    <div id="profileOverlay" class="startup-overlay profile-overlay">
+        <div class="startup-box profile-box">
+            <div class="startup-logo">
+                <div class="startup-logo-icon">
+                    <svg viewBox="0 0 32 32" fill="none">
+                        <path d="M20 4L8 18h8l-4 10 12-14h-8l4-10z" fill="#f56f10"/>
+                    </svg>
+                </div>
+                <span class="startup-logo-text">Fix<span>Me</span></span>
+            </div>
+            <div class="profile-title" id="profileOverlayTitle">Personalize sua experiência</div>
+            <div class="profile-subtitle" id="profileOverlaySubtitle">Isso ajuda o FixMe a aprender e otimizar melhor para você</div>
+
+            <div class="profile-field">
+                <div class="profile-field-label" id="profileUsageTypeLabel">Como você mais usa o PC?</div>
+                <div class="profile-radio-group">
+                    <label class="profile-radio"><input type="radio" name="profileUsageType" value="Gamer"><span id="profileUsageGamerLbl">Jogos</span></label>
+                    <label class="profile-radio"><input type="radio" name="profileUsageType" value="Trabalho"><span id="profileUsageTrabalhoLbl">Trabalho</span></label>
+                    <label class="profile-radio"><input type="radio" name="profileUsageType" value="Misto"><span id="profileUsageMistoLbl">Misto</span></label>
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label" id="profilePriorityLabel">O que é mais importante?</div>
+                <div class="profile-radio-group">
+                    <label class="profile-radio"><input type="radio" name="profilePriority" value="performance"><span id="profilePriorityPerformanceLbl">Desempenho máximo</span></label>
+                    <label class="profile-radio"><input type="radio" name="profilePriority" value="balanced"><span id="profilePriorityBalancedLbl">Equilibrado</span></label>
+                    <label class="profile-radio"><input type="radio" name="profilePriority" value="quiet"><span id="profilePriorityQuietLbl">Silêncio / economia</span></label>
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label" id="profileFavoriteAppsLabel">Apps ou jogos favoritos (opcional)</div>
+                <input type="text" class="profile-text-input" id="profileFavoriteAppsInput" placeholder="ex: Valorant, VSCode, Chrome">
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label" id="profilePeakHoursLabel">Quando você mais usa o PC intensamente?</div>
+                <div class="profile-checkbox-group" id="profilePeakHoursGroup">
+                    <label class="profile-checkbox"><input type="checkbox" value="morning"><span id="profilePeakMorningLbl">Manhã</span></label>
+                    <label class="profile-checkbox"><input type="checkbox" value="afternoon"><span id="profilePeakAfternoonLbl">Tarde</span></label>
+                    <label class="profile-checkbox"><input type="checkbox" value="evening"><span id="profilePeakEveningLbl">Noite</span></label>
+                    <label class="profile-checkbox"><input type="checkbox" value="night"><span id="profilePeakNightLbl">Madrugada</span></label>
+                </div>
+            </div>
+
+            <button class="profile-save-btn" onclick="saveProfileForm()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <span id="profileSaveBtnLbl">Salvar</span>
+            </button>
+            <button class="profile-skip-btn" id="profileSkipBtn" onclick="skipProfileOverlay()">Pular por agora</button>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="logo">
@@ -1386,7 +1552,7 @@
                     <circle cx="8" cy="14" r="1"/><circle cx="16" cy="14" r="1"/>
                 </svg>
             </button>
-            <button class="icon-btn">
+            <button class="icon-btn" id="profileEditBtn" onclick="openProfileOverlay('edit')" title="Editar perfil">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
@@ -1464,7 +1630,7 @@
                         </svg>
                         <div class="gauge-ring-text" id="gpu-gauge-text">20%</div>
                     </div>
-                    <div class="hardware-label">GPU</div>
+                    <div class="hardware-label">GPU<span class="gpu-native-badge" id="gpuNativeBadge" style="display:none;"></span></div>
                     <div class="hardware-value" id="hw-gpu-name">Detectando...</div>
                     <div class="hw-percent" id="hw-gpu-detail">-- VRAM</div>
                     <div class="hardware-usage">
@@ -2640,6 +2806,32 @@
                 'deepaiResultTitle':    'Análise Completa',
                 'deepaiClearBtn':       'Limpar',
                 'deepaiRefineBtnLabel': 'Perguntar',
+                // User Profile
+                'profileOverlayTitle':          'Personalize sua experiência',
+                'profileOverlaySubtitle':       'Isso ajuda o FixMe a aprender e otimizar melhor para você',
+                'profileUsageTypeLabel':        'Como você mais usa o PC?',
+                'profileUsageGamerLbl':         'Jogos',
+                'profileUsageTrabalhoLbl':      'Trabalho',
+                'profileUsageMistoLbl':         'Misto',
+                'profilePriorityLabel':         'O que é mais importante?',
+                'profilePriorityPerformanceLbl':'Desempenho máximo',
+                'profilePriorityBalancedLbl':   'Equilibrado',
+                'profilePriorityQuietLbl':      'Silêncio / economia',
+                'profileFavoriteAppsLabel':     'Apps ou jogos favoritos (opcional)',
+                'profileFavoriteAppsPlaceholder':'ex: Valorant, VSCode, Chrome',
+                'profilePeakHoursLabel':        'Quando você mais usa o PC intensamente?',
+                'profilePeakMorningLbl':        'Manhã',
+                'profilePeakAfternoonLbl':      'Tarde',
+                'profilePeakEveningLbl':        'Noite',
+                'profilePeakNightLbl':          'Madrugada',
+                'profileSaveBtnLbl':            'Salvar',
+                'profileSkipBtn':               'Pular por agora',
+                'profileEditBtnTitle':          'Editar perfil',
+                'profileSavedToast':            'Perfil salvo!',
+                'profileErrorToast':            'Erro ao salvar perfil',
+                'profileRequiredToast':         'Selecione uma opção em cada campo obrigatório',
+                'gpuNativeOn':                  'GPU real',
+                'gpuNativeOff':                 'GPU estimada',
             },
             en: {
                 // Header / Status
@@ -2743,6 +2935,32 @@
                 'deepaiResultTitle':    'Full Analysis',
                 'deepaiClearBtn':       'Clear',
                 'deepaiRefineBtnLabel': 'Ask',
+                // User Profile
+                'profileOverlayTitle':          'Personalize your experience',
+                'profileOverlaySubtitle':       'This helps FixMe learn and optimize better for you',
+                'profileUsageTypeLabel':        'How do you mostly use your PC?',
+                'profileUsageGamerLbl':         'Gaming',
+                'profileUsageTrabalhoLbl':      'Work',
+                'profileUsageMistoLbl':         'Mixed',
+                'profilePriorityLabel':         'What matters most?',
+                'profilePriorityPerformanceLbl':'Maximum performance',
+                'profilePriorityBalancedLbl':   'Balanced',
+                'profilePriorityQuietLbl':      'Quiet / power saving',
+                'profileFavoriteAppsLabel':     'Favorite apps or games (optional)',
+                'profileFavoriteAppsPlaceholder':'e.g. Valorant, VSCode, Chrome',
+                'profilePeakHoursLabel':        'When do you use your PC most intensely?',
+                'profilePeakMorningLbl':        'Morning',
+                'profilePeakAfternoonLbl':      'Afternoon',
+                'profilePeakEveningLbl':        'Evening',
+                'profilePeakNightLbl':          'Late night',
+                'profileSaveBtnLbl':            'Save',
+                'profileSkipBtn':               'Skip for now',
+                'profileEditBtnTitle':          'Edit profile',
+                'profileSavedToast':            'Profile saved!',
+                'profileErrorToast':            'Error saving profile',
+                'profileRequiredToast':         'Please select an option for each required field',
+                'gpuNativeOn':                  'Real GPU',
+                'gpuNativeOff':                 'Estimated GPU',
             }
         };
 
@@ -2771,6 +2989,13 @@
                 'winoptGameBoostTitle','winoptGameBoostBtn',
                 'deepaiSectionTitle','deepaiIdleText','deepaiBtnRun','deepaiBtnBottleneck',
                 'deepaiResultTitle','deepaiClearBtn','deepaiRefineBtnLabel',
+                // User Profile
+                'profileOverlayTitle','profileOverlaySubtitle','profileUsageTypeLabel',
+                'profileUsageGamerLbl','profileUsageTrabalhoLbl','profileUsageMistoLbl',
+                'profilePriorityLabel','profilePriorityPerformanceLbl','profilePriorityBalancedLbl','profilePriorityQuietLbl',
+                'profileFavoriteAppsLabel','profilePeakHoursLabel',
+                'profilePeakMorningLbl','profilePeakAfternoonLbl','profilePeakEveningLbl','profilePeakNightLbl',
+                'profileSaveBtnLbl','profileSkipBtn',
             ];
             ids.forEach(id => {
                 const el = document.getElementById(id);
@@ -2811,6 +3036,11 @@
             const langFlag  = document.getElementById('langFlag');
             if (langLabel) langLabel.textContent = currentLang === 'pt' ? 'PT' : 'EN';
             if (langFlag)  langFlag.textContent  = currentLang === 'pt' ? '🇧🇷' : '🇺🇸';
+            // Profile overlay: placeholder + edit-button tooltip aren't textContent
+            const favInput = document.getElementById('profileFavoriteAppsInput');
+            if (favInput) favInput.placeholder = t('profileFavoriteAppsPlaceholder');
+            const profileEditBtn = document.getElementById('profileEditBtn');
+            if (profileEditBtn) profileEditBtn.title = t('profileEditBtnTitle');
         }
 
         function toggleLang() {
@@ -2895,6 +3125,97 @@
         function dismissStartup() {
             const overlay = document.getElementById('startupOverlay');
             if (overlay) overlay.classList.add('fade-out');
+            checkFirstRunProfile();
+        }
+
+        // ══════════════════════════════════
+        // User Profile (onboarding + edit)
+        // ══════════════════════════════════
+
+        async function checkFirstRunProfile() {
+            if (typeof window.fixme === 'undefined') return;
+            try {
+                const res = await window.fixme.getProfile();
+                if (res && res.success && !res.data) openProfileOverlay('onboarding');
+            } catch (e) { /* profile is optional — fail silent */ }
+        }
+
+        function fillProfileForm(profile) {
+            const usageInput = document.querySelector(`input[name="profileUsageType"][value="${profile.usageType}"]`);
+            if (usageInput) usageInput.checked = true;
+            const priorityInput = document.querySelector(`input[name="profilePriority"][value="${profile.priority}"]`);
+            if (priorityInput) priorityInput.checked = true;
+            const favInput = document.getElementById('profileFavoriteAppsInput');
+            if (favInput) favInput.value = profile.favoriteApps || '';
+            const peakHours = profile.peakHours || [];
+            document.querySelectorAll('#profilePeakHoursGroup input[type="checkbox"]').forEach(cb => {
+                cb.checked = peakHours.includes(cb.value);
+            });
+        }
+
+        function openProfileOverlay(mode) {
+            const overlay = document.getElementById('profileOverlay');
+            if (!overlay) return;
+            const skipBtn = document.getElementById('profileSkipBtn');
+            if (skipBtn) skipBtn.style.display = mode === 'edit' ? 'none' : 'block';
+
+            if (mode === 'edit' && typeof window.fixme !== 'undefined') {
+                window.fixme.getProfile().then(res => {
+                    if (res && res.success && res.data) fillProfileForm(res.data);
+                }).catch(() => {});
+            }
+
+            applyLang();
+            overlay.classList.add('show');
+        }
+
+        function closeProfileOverlay() {
+            const overlay = document.getElementById('profileOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        function skipProfileOverlay() {
+            closeProfileOverlay();
+        }
+
+        async function saveProfileForm() {
+            const usageType = document.querySelector('input[name="profileUsageType"]:checked')?.value;
+            const priority  = document.querySelector('input[name="profilePriority"]:checked')?.value;
+            if (!usageType || !priority) { showToast(t('profileRequiredToast')); return; }
+
+            const favoriteApps = document.getElementById('profileFavoriteAppsInput')?.value || '';
+            const peakHours = Array.from(document.querySelectorAll('#profilePeakHoursGroup input[type="checkbox"]:checked')).map(cb => cb.value);
+            const profile = { usageType, priority, favoriteApps, peakHours };
+
+            if (typeof window.fixme === 'undefined') { closeProfileOverlay(); return; }
+            try {
+                const res = await window.fixme.saveProfile(profile);
+                if (res && res.success) {
+                    showToast(t('profileSavedToast'));
+                    closeProfileOverlay();
+                } else {
+                    showToast(t('profileErrorToast'));
+                }
+            } catch (e) {
+                showToast(t('profileErrorToast'));
+            }
+        }
+
+        async function checkNativeCapabilities() {
+            if (typeof window.fixme === 'undefined' || !window.fixme.getNativeCapabilities) return;
+            try {
+                const res = await window.fixme.getNativeCapabilities();
+                const badge = document.getElementById('gpuNativeBadge');
+                if (!badge || !res || !res.success || !res.data) return;
+                if (res.data.gpuCounterFound) {
+                    badge.textContent = t('gpuNativeOn');
+                    badge.classList.remove('off');
+                } else {
+                    badge.textContent = t('gpuNativeOff');
+                    badge.classList.add('off');
+                }
+                badge.style.display = 'inline-block';
+            } catch (e) { /* cosmetic only — fail silent */ }
         }
 
         async function runStartupSequence() {
@@ -3052,6 +3373,7 @@
             if (isElectron) {
                 try {
                     await window.fixme.startMonitoring(2000);
+                    checkNativeCapabilities();
                     window.fixme.onStatsUpdate((data) => {
                         if (data && data.stats) {
                             const s = data.stats;

@@ -27,6 +27,8 @@ function assertEq(actual, expected, name) {
 // ── Mock electron dependency used by database.js ──
 const mlTrainingStore = [];
 const requestLogStore = [];
+let localMLStateStore = null;
+let userProfileStore = null;
 require.cache[require.resolve('./src/database')] = {
   id: require.resolve('./src/database'),
   filename: require.resolve('./src/database'),
@@ -38,6 +40,10 @@ require.cache[require.resolve('./src/database')] = {
     recordRequestLog: (r) => requestLogStore.push(r),
     getOptimizationHistory: () => [],
     recordOptimization: () => {},
+    getLocalMLState: () => localMLStateStore,
+    saveLocalMLState: (s) => { localMLStateStore = s; },
+    getUserProfile: () => userProfileStore,
+    recordUserProfile: (p) => { userProfileStore = { ...p, updatedAt: new Date().toISOString() }; },
   }
 };
 
@@ -131,6 +137,140 @@ const stats = rp.getUsageStats();
 assert(typeof stats === 'object', 'getUsageStats returns object');
 assert('high_performance' in stats, 'stats has high_performance key');
 assertEq(stats['high_performance'].todayCount, 0, 'today count is 0 initially');
+
+// ── Test: NativeTelemetry (PDH via koffi) ──
+console.log('\n[NativeTelemetry]');
+const NativeTelemetry = require('./src/native-telemetry');
+
+// Pure helper — no PDH/koffi/OS dependency.
+{
+  const fixture = [
+    { szName: 'pid_1_eng_0_engtype_3D', FmtValue: { CStatus: 0, doubleValue: 10 } },
+    { szName: 'pid_2_eng_0_engtype_3D', FmtValue: { CStatus: 0, doubleValue: 5.5 } },
+    { szName: 'pid_1_eng_1_engtype_Copy', FmtValue: { CStatus: 0, doubleValue: 99 } },
+    { szName: 'pid_3_eng_0_engtype_3D', FmtValue: { CStatus: 0x800007D5, doubleValue: 42 } } // invalid, excluded
+  ];
+  assertEq(NativeTelemetry._sumEngineType(fixture, '3D'), 15.5, '_sumEngineType sums only matching+valid engtype_3D entries');
+  assertEq(NativeTelemetry._sumEngineType([], '3D'), 0, '_sumEngineType returns 0 for empty input');
+  assertEq(NativeTelemetry._sumEngineType(fixture, 'VR'), 0, '_sumEngineType returns 0 when no engine matches');
+}
+
+// Environment-dependent best-effort check — probe() must never throw even if
+// PDH/koffi is unavailable on the machine running the tests; this is a soft
+// check, not a hard requirement (a GPU-less CI box would legitimately fail it).
+{
+  const nt = new NativeTelemetry();
+  let threw = false;
+  let caps = null;
+  try { caps = nt.probe(); } catch (_) { threw = true; }
+  assert(threw === false, 'probe() never throws');
+  assert(caps && typeof caps.available === 'boolean', 'getCapabilities-shaped result from probe()');
+  if (!caps.available) {
+    console.log('  (native telemetry unavailable on this machine — capability probe skipped, this is expected on non-Windows/GPU-less environments)');
+  }
+}
+
+// ── Test: LocalMLHub (user profile prior integration) ──
+console.log('\n[LocalMLHub]');
+const LocalMLHub = require('./src/local-ml');
+const { UserProfileCluster, OptimizationScorer, SessionClassifier, splitFavoriteApps } = LocalMLHub;
+
+// UserProfileCluster.seedFromDeclaredProfile
+{
+  const cluster = new UserProfileCluster();
+  // Drift the Gamer centroid away from its archetype first (a fresh cluster
+  // starts exactly on-archetype, so seeding would have nothing to visibly move).
+  // cpu=60/mem=55/gpu=90/procs=100/hour=20 is still nearest to the Gamer
+  // centroid (vs the other 3), so repeated updates pull centroids[0] specifically.
+  for (let i = 0; i < 5; i++) cluster.update(60, 55, 90, 100, 20);
+  const drifted = [...cluster.centroids[0]];
+
+  const applied = cluster.seedFromDeclaredProfile('Gamer');
+  assert(applied === true, 'seedFromDeclaredProfile applies for a known non-Idle profile');
+  const target = [0.70, 0.70, 0.80, 0.30, 0.75]; // DEFAULT_CENTROIDS[Gamer]
+  const distBefore = Math.hypot(...drifted.map((v, i) => v - target[i]));
+  const distAfter = Math.hypot(...cluster.centroids[0].map((v, i) => v - target[i]));
+  assert(distAfter < distBefore, 'seeding moves the matching centroid closer to its archetype');
+
+  const reapplied = cluster.seedFromDeclaredProfile('Gamer');
+  assertEq(reapplied, false, 'seeding again without force is a no-op (idempotent)');
+
+  const forced = cluster.seedFromDeclaredProfile('Gamer', { force: true });
+  assertEq(forced, true, 'force:true re-applies seeding');
+
+  const rejected = cluster.seedFromDeclaredProfile('Idle');
+  assertEq(rejected, false, 'seedFromDeclaredProfile rejects Idle');
+  const rejectedUnknown = cluster.seedFromDeclaredProfile('NotAProfile');
+  assertEq(rejectedUnknown, false, 'seedFromDeclaredProfile rejects unknown names');
+}
+
+// OptimizationScorer.predict with/without priorityBias
+{
+  const scorer = new OptimizationScorer();
+  const busyStats = { cpu: { current: 80 }, memory: { current: 60 }, gpu: { current: 40 }, processCount: 200 };
+  // Moderate deltas so measured effectiveness lands well under the 1.0 cap —
+  // otherwise the priorityBias bump would be invisible behind clamp(...,0,1).
+  scorer.train(busyStats, 'high_performance', { cpu: 80, mem: 60, gpu: 40 }, { cpu: 65, mem: 52, gpu: 33 });
+  scorer.train(busyStats, 'clear_ram', { cpu: 80, mem: 60, gpu: 40 }, { cpu: 74, mem: 45, gpu: 38 });
+  scorer.train(busyStats, 'diagnostico', { cpu: 80, mem: 60, gpu: 40 }, { cpu: 78, mem: 59, gpu: 39 });
+
+  const withoutBias = scorer.predict(busyStats);
+  const withoutBiasAgain = scorer.predict(busyStats); // no priorityBias arg at all — regression guard
+  assertEq(
+    JSON.stringify(withoutBias.predictions),
+    JSON.stringify(withoutBiasAgain.predictions),
+    'predict() with no priorityBias arg is unchanged (backward compatible)'
+  );
+
+  const withNullBias = scorer.predict(busyStats, {}, null);
+  assertEq(
+    JSON.stringify(withoutBias.predictions),
+    JSON.stringify(withNullBias.predictions),
+    'predict() with explicit null priorityBias matches no-bias behavior'
+  );
+
+  const perfScoreBefore = withoutBias.predictions.find(p => p.type === 'high_performance').score;
+  const withPerfBias = scorer.predict(busyStats, {}, 'performance');
+  const perfScoreAfter = withPerfBias.predictions.find(p => p.type === 'high_performance').score;
+  assert(perfScoreAfter > perfScoreBefore, 'priorityBias "performance" raises high_performance score');
+}
+
+// SessionClassifier — favorite apps extend keyword detection
+{
+  const classifier = new SessionClassifier();
+  const procs = [{ name: 'myfancygame.exe' }];
+
+  const withoutExtra = classifier._features(50, 40, 30, procs);
+  assertEq(withoutExtra.hasGame, 'n', 'hasGame is "n" for an app not in the hardcoded keyword list');
+
+  const withExtra = classifier._features(50, 40, 30, procs, { game: ['myfancygame'] });
+  assertEq(withExtra.hasGame, 'y', 'hasGame flips to "y" when the app is passed via extra.game');
+}
+
+// splitFavoriteApps
+{
+  const gamer = splitFavoriteApps({ usageType: 'Gamer', favoriteApps: 'Valorant, CS2' });
+  assertEq(JSON.stringify(gamer), JSON.stringify({ game: ['valorant', 'cs2'], work: [] }), 'splitFavoriteApps buckets Gamer apps into game only');
+
+  const worker = splitFavoriteApps({ usageType: 'Trabalho', favoriteApps: 'VSCode, Slack' });
+  assertEq(JSON.stringify(worker), JSON.stringify({ game: [], work: ['vscode', 'slack'] }), 'splitFavoriteApps buckets Trabalho apps into work only');
+
+  const misto = splitFavoriteApps({ usageType: 'Misto', favoriteApps: 'Discord' });
+  assertEq(JSON.stringify(misto), JSON.stringify({ game: ['discord'], work: ['discord'] }), 'splitFavoriteApps buckets Misto apps into both');
+
+  const empty = splitFavoriteApps(null);
+  assertEq(JSON.stringify(empty), JSON.stringify({ game: [], work: [] }), 'splitFavoriteApps handles a null profile');
+}
+
+// LocalMLHub.reloadDeclaredProfile — end-to-end via the mocked database
+{
+  userProfileStore = { usageType: 'Gamer', priority: 'performance', favoriteApps: 'myfancygame', peakHours: [] };
+  const hub = new LocalMLHub();
+  hub.load();
+  assertEq(hub.declaredProfile.usageType, 'Gamer', 'load() pulls the declared profile from the database');
+  assertEq(hub.cluster._seededFor, 'Gamer', 'load() seeds the cluster from the declared profile');
+  assertEq(JSON.stringify(hub._favoriteKeywords), JSON.stringify({ game: ['myfancygame'], work: [] }), 'load() derives favorite keywords from the declared profile');
+}
 
 // ── Results ──
 console.log(`\n${'='.repeat(40)}`);
