@@ -47,6 +47,28 @@ O **FixMe** e uma aplicacao desktop construida com Electron que monitora, diagno
 
 ## Dashboard
 
+A interface está organizada em **Visão geral**, **Otimizações**, **Inteligência** e **Atividade**, com diagnóstico em um painel lateral. O tema grafite usa fontes do sistema e funciona sem baixar fontes externas.
+
+- A inicialização carrega os dados em segundo plano, sem executar diagnóstico ou aplicar ajustes automaticamente.
+- Métricas e aplicativos vêm do Windows. Falta de sensor aparece como indisponível; VRAM ocupada não é tratada como utilização da GPU.
+- Cada ajuste possui uma ação **Aplicar**. Efeitos visuais e plano de energia oferecem **Reverter** nesta sessão. A reversão visual redefine a preferência geral do Windows; não restaura individualmente todos os valores anteriores do registro.
+- **Encerrar** atua somente no aplicativo selecionado, entre os processos opcionais permitidos.
+- Falhas e resultados parciais são exibidos sem registrar sucesso indevido. Recomendações não são contadas como correções executadas.
+- A aba Atividade mostra as ações desta sessão. Fora do Electron, a página oferece apenas uma prévia visual, com ações de sistema desabilitadas.
+
+### Execução das otimizações no Electron
+
+- O conjunto **Aplicar ajustes básicos** altera somente efeitos visuais e plano de energia. Serviços, rede, agendador, registro, GPU e memória são ações individuais.
+- Um único ajuste pode executar por vez no processo principal. A interface mostra etapa e tempo decorrido e continua permitindo navegação e monitoramento.
+- Comandos de uma mesma categoria usam uma elevação em lote. Cancelar o UAC interrompe a sequência.
+- Há prazo para autorização e para o comando elevado. Se o Windows ainda não confirmou o encerramento após o prazo, o app mantém os novos ajustes bloqueados; uma espera excedida não significa que nada foi aplicado.
+- A limpeza de memória não reduz o conjunto de trabalho dos aplicativos nem desativa a compressão do Windows. Ela usa somente o modo standby da ferramenta opcional `EmptyStandbyList.exe`; sem a ferramenta, informa indisponibilidade.
+- Leituras de hardware são compartilhadas e têm cache curto. A resposta de uma otimização não aguarda uma nova consulta de sensores.
+
+### Prévia visual no navegador
+
+Execute `npm run preview` e abra **http://127.0.0.1:4173**. A prévia usa o mesmo HTML, CSS e JavaScript do Electron, com dados demonstrativos identificados e ações de sistema desativadas. As quatro abas, o painel de diagnóstico e a troca de idioma podem ser explorados sem executar otimizações.
+
 <p align="center">
   <img src="docs/screenshots/hardware-gauges.svg" alt="Hardware Gauges" width="100%"/>
 </p>
@@ -195,7 +217,9 @@ Todas as operacoes privilegiadas passam por UAC via `sudo-prompt` e sao protegid
 FixMe/
 ├── main.js                 # Processo principal Electron + todos os IPC handlers
 ├── preload.js              # Context Bridge (window.fixme.*)
-├── dashboard.html          # UI completa + ML inline (renderer)
+├── dashboard.html          # Estrutura das quatro areas e paineis
+├── dashboard.css           # Tema grafite e layout responsivo
+├── dashboard.js            # Interface PT/EN com dados reais via IPC
 ├── launch.js               # Remove ELECTRON_RUN_AS_NODE antes de spawnar
 ├── install.ps1             # Instalador via PowerShell one-liner
 ├── .env.example            # Template de configuracao
@@ -292,6 +316,18 @@ npm run dist      # Gera instalador NSIS .exe em /dist
 npm run pack      # Dir-only (sem installer, mais rapido)
 npm run release   # Build + publica no GitHub Releases
 ```
+
+O pacote não inclui o `.env` de desenvolvimento. Configure a chave de IA no diretório de dados do usuário após instalar.
+
+### Testes
+
+```bash
+npm run test:unit       # Logica legada, backend e renderer; acoes Windows mockadas
+npm test                # Inclui janela Electron e smoke test do app real
+npm run test:windows    # Watchdog PowerShell com comandos inofensivos, sem UAC
+```
+
+O smoke test usa dados isolados em `qa/`, chamadas de leitura e um ajuste simulado com atraso para verificar a resposta da janela Electron. Os testes do navegador em `test-browser-flow.js` validam os fluxos com uma ponte simulada; para executar, abra uma prévia servida por HTTP no Playwright CLI e use `playwright-cli run-code --filename=test-browser-flow.js`. As capturas também ficam em `qa/`.
 
 ### CI/CD
 

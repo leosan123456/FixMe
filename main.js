@@ -18,7 +18,7 @@ function _loadEnv() {
   // 1. Project root (development)
   const local = path0.join(__dirname, '.env');
   if (fs0.existsSync(local)) return local;
-  // 2. Packaged: extraResources injects .env next to app.asar
+  // 2. Optional user-provided configuration next to app.asar (never bundled).
   if (process.resourcesPath) {
     const res = path0.join(process.resourcesPath, '.env');
     if (fs0.existsSync(res)) return res;
@@ -42,9 +42,11 @@ const RequestParams = require('./src/request-params');
 const winOptimizerModule = require('./src/win-optimizer');
 const DeepAI = require('./src/deep-ai');
 const LocalMLHub = require('./src/local-ml');
+const MonitoringLoop = require('./src/monitoring');
+const OptimizationRunner = require('./src/optimization-runner');
 
 let hwMonitor, suggestionsEngine, aiOptimizer, appsCollector, diagnostics, mlEngine, requestParams, deepAI, localML;
-try { hwMonitor       = new HardwareMonitor();    } catch(e) { _log('INIT_HW', e);   hwMonitor       = { getHardwareStats: async () => ({ cpu:{current:0,cores:[],history:[]}, memory:{current:0,used:0,total:0,free:0,history:[]}, gpu:{current:0,history:[]}, topCpuProcesses:[], topMemoryProcesses:[], processCount:0 }), getSystemInfo: async () => ({}), getNativeCapabilities: () => ({ available:false, reason:'init_failed' }) }; }
+try { hwMonitor       = new HardwareMonitor();    } catch(e) { _log('INIT_HW', e);   hwMonitor       = { getHardwareStats: async () => ({ cpu:{current:null,available:false,cores:[],history:[]}, memory:{current:null,available:false,used:null,total:null,free:null,history:[]}, gpu:{current:null,available:false,source:'unavailable',history:[]}, topCpuProcesses:[], topMemoryProcesses:[], processCount:null, error:'Monitoramento indisponível' }), getSystemInfo: async () => ({}), getNativeCapabilities: () => ({ available:false, reason:'init_failed' }) }; }
 try { suggestionsEngine = new SuggestionsEngine(); } catch(e) { _log('INIT_SUGG', e); suggestionsEngine = { getSuggestions: () => [] }; }
 try { aiOptimizer     = new AIOptimizer();        } catch(e) { _log('INIT_AI', e);   aiOptimizer     = {}; }
 try { appsCollector   = new AppsCollector();      } catch(e) { _log('INIT_APPS', e); appsCollector   = { getRunningApps: async () => [] }; }
@@ -54,10 +56,37 @@ try { requestParams   = new RequestParams();       } catch(e) { _log('INIT_RP', 
 try { deepAI          = new DeepAI();              } catch(e) { _log('INIT_DAI', e); deepAI          = { analyze: async () => ({}), recordPattern: () => {} }; }
 try { localML         = new LocalMLHub();          } catch(e) { _log('INIT_LML', e); localML         = { tick: () => ({}), recordOutcome: () => {}, predict: () => null, getStats: () => ({}), reloadDeclaredProfile: () => {} }; }
 const winOptimizer = winOptimizerModule;
-let monitorInterval = null;
-// snapshot of stats taken just before an optimization (for before/after delta)
-let statsBeforeOptimization = null;
+const monitoring = new MonitoringLoop({
+  collect: () => hwMonitor.getHardwareStats(),
+  publish: (stats, sender) => {
+    const suggestions = suggestionsEngine.getSuggestions(stats);
+    const mlInsights = localML.tick(stats, stats.topCpuProcesses || []);
+    deepAI.recordPattern(
+      parseFloat(stats?.cpu?.current || 0),
+      parseFloat(stats?.memory?.current || 0),
+      parseFloat(stats?.gpu?.current || 0)
+    );
+    sender.send('hw:stats-update', { stats, suggestions, mlInsights });
+  },
+  onError: (err) => _log('MONITORING', err)
+});
 let mainWindow = null;
+const optimizationRunner = new OptimizationRunner({
+  getExecutionState: () => optim.getExecutionState?.() || {},
+  publish: (state) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('optim:progress', state);
+  }
+});
+optim.subscribeExecutionState?.(() => optimizationRunner.executionSettled());
+
+function handleOptimization(channel, operation, handler) {
+  ipcMain.handle(channel, (event, ...args) => optimizationRunner.run(operation, async report => {
+    report({ phase: 'executing' });
+    return handler(event, ...args);
+  }));
+}
+ipcMain.handle('optim:get-state', () => ({ success: true, data: optimizationRunner.getState() }));
+
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -66,7 +95,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: true,
-    backgroundColor: '#020917',
+    backgroundColor: '#11161d',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -85,7 +114,9 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'dashboard.html'));
 
-  if (!app.isPackaged) mainWindow.webContents.openDevTools();
+  if (!app.isPackaged && (process.env.FIXME_DEVTOOLS === '1' || process.argv.includes('--devtools'))) {
+    mainWindow.webContents.openDevTools();
+  }
 }
 
 app.whenReady().then(() => {
@@ -105,24 +136,31 @@ app.whenReady().then(() => {
 }).catch(err => _log('APP_READY', err));
 
 app.on('window-all-closed', function () {
+  monitoring.stop();
   if (process.platform !== 'darwin') app.quit();
 });
 
+app.on('before-quit', () => monitoring.stop());
+
 // ── Helper: treinar ML após execução ──
-async function trainML(type, success) {
+async function trainML(type, success, statsBefore = null) {
   try {
-    const statsAfter = await hwMonitor.getHardwareStats();
+    const statsAfter = hwMonitor.getCachedHardwareStats?.();
+    if (!statsAfter || statsAfter.error) return; // Telemetry must never delay completion of a Windows action.
+    if (statsBefore) {
+      const beforeAt = Date.parse(statsBefore.timestamp), afterAt = Date.parse(statsAfter.timestamp);
+      if (!Number.isFinite(beforeAt) || !Number.isFinite(afterAt) || afterAt <= beforeAt) return;
+    }
     mlEngine.train(statsAfter, type, success ? 0.6 : 0.2);
-    if (statsBeforeOptimization) {
-      localML.recordOutcome(type, statsBeforeOptimization, statsAfter, success ? 4 : 2);
-      statsBeforeOptimization = null;
+    if (statsBefore) {
+      localML.recordOutcome(type, statsBefore, statsAfter, success ? 4 : 2);
     }
   } catch (e) { /* silenciar */ }
 }
 
 // ── Helper: capturar stats antes de uma otimização ──
 async function snapshotBefore() {
-  try { statsBeforeOptimization = await hwMonitor.getHardwareStats(); } catch (e) {}
+  try { return hwMonitor.getCachedHardwareStats?.() || null; } catch (e) { return null; }
 }
 
 // ── Helper: resposta bloqueada por cooldown/limite ──
@@ -136,18 +174,18 @@ function blockedResponse(check) {
 }
 
 // ===== Otimizações =====
-ipcMain.handle('optim:set-high-performance', async () => {
+handleOptimization('optim:set-high-performance', 'setHighPerformance', async () => {
   const check = requestParams.canExecute('high_performance');
   if (!check.allowed) return blockedResponse(check);
   try {
-    await snapshotBefore();
+    const statsBefore = await snapshotBefore();
     const res = await optim.setHighPerformance();
     requestParams.logRequest('high_performance', true);
-    await trainML('high_performance', true);
+    await trainML('high_performance', true, statsBefore);
     return { success: true, out: res };
   } catch (err) {
     requestParams.logRequest('high_performance', false);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -156,37 +194,37 @@ ipcMain.handle('optim:get-active-powerplan', async () => {
     const res = await optim.getActivePowerPlan();
     return { success: true, out: res };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
-ipcMain.handle('optim:set-process-priority', async (_, processName, priority) => {
+handleOptimization('optim:set-process-priority', 'setProcessPriority', async (_, processName, priority) => {
   const check = requestParams.canExecute('process_priority');
   if (!check.allowed) return blockedResponse(check);
   try {
-    await snapshotBefore();
+    const statsBefore = await snapshotBefore();
     const res = await optim.setProcessPriority(processName, priority);
     requestParams.logRequest('process_priority', true);
-    await trainML('process_priority', true);
+    await trainML('process_priority', true, statsBefore);
     return { success: true, out: res };
   } catch (err) {
     requestParams.logRequest('process_priority', false);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
-ipcMain.handle('optim:clear-standby-list', async () => {
+handleOptimization('optim:clear-standby-list', 'clearStandbyList', async () => {
   const check = requestParams.canExecute('clear_ram');
   if (!check.allowed) return blockedResponse(check);
   try {
-    await snapshotBefore();
+    const statsBefore = await snapshotBefore();
     const res = await optim.clearStandbyList();
     requestParams.logRequest('clear_ram', true);
-    await trainML('clear_ram', true);
+    await trainML('clear_ram', true, statsBefore);
     return { success: true, out: res };
   } catch (err) {
     requestParams.logRequest('clear_ram', false);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -196,7 +234,7 @@ ipcMain.handle('hw:get-system-info', async () => {
     const info = await hwMonitor.getSystemInfo();
     return { success: true, data: info };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -206,35 +244,21 @@ ipcMain.handle('hw:get-stats', async () => {
     const suggestions = suggestionsEngine.getSuggestions(stats);
     return { success: true, data: { stats, suggestions } };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
 ipcMain.handle('hw:start-monitoring', async (event, intervalMs = 2000) => {
-  if (monitorInterval) clearInterval(monitorInterval);
-  monitorInterval = setInterval(async () => {
-    try {
-      const stats = await hwMonitor.getHardwareStats();
-      const suggestions = suggestionsEngine.getSuggestions(stats);
-      const mlInsights  = localML.tick(stats, stats.topCpuProcesses || []);
-      deepAI.recordPattern(
-        parseFloat(stats?.cpu?.current || 0),
-        parseFloat(stats?.memory?.current || 0),
-        parseFloat(stats?.gpu?.current || 0)
-      );
-      event.sender.send('hw:stats-update', { stats, suggestions, mlInsights });
-    } catch (err) {
-      console.error('Erro no monitoramento:', err);
-    }
-  }, intervalMs);
-  return { success: true, message: 'Monitoramento iniciado' };
+  try {
+    monitoring.start(event.sender, intervalMs);
+    return { success: true, message: 'Monitoramento iniciado' };
+  } catch (err) {
+    return { success: false, error: String(err), code: err?.code };
+  }
 });
 
 ipcMain.handle('hw:stop-monitoring', async () => {
-  if (monitorInterval) {
-    clearInterval(monitorInterval);
-    monitorInterval = null;
-  }
+  monitoring.stop();
   return { success: true, message: 'Monitoramento parado' };
 });
 
@@ -242,7 +266,7 @@ ipcMain.handle('hw:native-capabilities', async () => {
   try {
     return { success: true, data: hwMonitor.getNativeCapabilities() };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -254,7 +278,7 @@ ipcMain.handle('profile:get', async () => {
   try {
     return { success: true, data: db.getUserProfile() };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -270,7 +294,7 @@ ipcMain.handle('profile:save', async (_, profile) => {
     localML.reloadDeclaredProfile();
     return { success: true, data: db.getUserProfile() };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -304,7 +328,7 @@ ipcMain.handle('ai:get-smart-recommendations', async () => {
 
     return { success: true, data: aiRecommendations };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -313,7 +337,7 @@ ipcMain.handle('ai:learn-from-feedback', async (_, optimizationId, rating, comme
     await aiOptimizer.learnFromFeedback(optimizationId, rating, comment);
     return { success: true, message: 'Feedback registrado e aprendizado aplicado' };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -335,7 +359,7 @@ ipcMain.handle('ai:suggest-game-optimization', async (_, gameName) => {
     return { success: true, data: gameOptimization };
   } catch (err) {
     requestParams.logRequest('game_optimization', false);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -344,7 +368,7 @@ ipcMain.handle('ai:get-analytics', async () => {
     const analytics = db.getAnalytics();
     return { success: true, data: analytics };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -354,7 +378,7 @@ ipcMain.handle('optim:record-success', async (_, type, cpuUsage, memUsage, gpuUs
     db.recordOptimization(type, sysInfo, cpuUsage, memUsage, gpuUsage, true, notes);
     return { success: true };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -366,17 +390,17 @@ function mapPriorityToNumber(priority) {
 // ===== Apps =====
 ipcMain.handle('apps:get-gallery', async () => {
   try { return { success: true, data: await appsCollector.collectAll() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('apps:get-recent', async () => {
   try { return { success: true, data: await appsCollector.getRecentApps() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('apps:get-games', async () => {
   try { return { success: true, data: await appsCollector.discoverGames() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 // ===== Diagnósticos =====
@@ -397,7 +421,7 @@ ipcMain.handle('diag:run-diagnostics', async (event) => {
     return { success: true, data: result };
   } catch (err) {
     requestParams.logRequest('diagnostico', false);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -423,6 +447,8 @@ ipcMain.handle('ai:full-analysis', async (event) => {
   try {
     // ── Step 1: Coleta de Hardware ──
     send(1, { status: 'active', detail: 'Coletando dados de hardware...' });
+    const unavailableStats = { cpu: { current: null }, memory: { current: null, used: null, total: null }, gpu: { current: null, available: false, source: 'unavailable' }, processCount: null, topCpuProcesses: [], topMemoryProcesses: [] };
+    const unknownSystem = { cpuModel: 'Desconhecido', cpuCores: null, totalMemory: null, gpuModel: null, os: 'Windows' };
     let hwStats, sysInfo;
     try {
       [hwStats, sysInfo] = await Promise.all([
@@ -430,12 +456,14 @@ ipcMain.handle('ai:full-analysis', async (event) => {
         hwMonitor.getSystemInfo()
       ]);
     } catch (e) {
-      hwStats = { cpu: { current: 0 }, memory: { current: 0, used: 0, total: 0 }, gpu: { current: 0 }, processCount: 0, topCpuProcesses: [], topMemoryProcesses: [] };
-      sysInfo = { cpuModel: 'Desconhecido', cpuCores: 0, totalMemory: '0' };
+      hwStats = unavailableStats;
+      sysInfo = unknownSystem;
     }
+    hwStats = hwStats || unavailableStats;
+    sysInfo = sysInfo || unknownSystem;
     send(1, {
       status: 'completed',
-      detail: `CPU: ${hwStats.cpu.current}% | RAM: ${hwStats.memory.current}% | GPU: ${hwStats.gpu.current}%`,
+      detail: `CPU: ${hwStats.cpu.current === null ? 'indisponível' : hwStats.cpu.current + '%'} | RAM: ${hwStats.memory.current === null ? 'indisponível' : hwStats.memory.current + '%'} | GPU: ${hwStats.gpu.current === null ? 'indisponível' : hwStats.gpu.current + '%'}`,
       data: { hwStats, sysInfo }
     });
 
@@ -447,12 +475,17 @@ ipcMain.handle('ai:full-analysis', async (event) => {
         send(2, { status: 'active', detail: progress.step, progress: progress.progress });
       });
     } catch (e) {
-      diagResult = { success: false, issues: [], totalIssues: 0, severity: 'unknown' };
+      send(2, { status: 'error', detail: 'Não foi possível concluir o diagnóstico local' });
+      throw new Error(`Não foi possível concluir o diagnóstico local: ${e.message || String(e)}`);
+    }
+    if (!diagResult || diagResult.success !== true || !Array.isArray(diagResult.issues)) {
+      send(2, { status: 'error', detail: 'Não foi possível concluir o diagnóstico local' });
+      throw new Error(`Não foi possível concluir o diagnóstico local: ${diagResult?.error || 'Resultado inválido'}`);
     }
     send(2, {
       status: 'completed',
       detail: `${diagResult.totalIssues || diagResult.issues.length} problemas detectados`,
-      data: { issues: diagResult.issues, severity: diagResult.severity }
+      data: { success: true, source: 'local', issues: diagResult.issues, severity: diagResult.severity || 'unknown' }
     });
 
     // ── Step 3: Predição ML ──
@@ -475,14 +508,21 @@ ipcMain.handle('ai:full-analysis', async (event) => {
     const hwProfile = {
       cpuModel: sysInfo.cpuModel,
       cpuCores: sysInfo.cpuCores,
-      totalMemory: parseFloat(sysInfo.totalMemory),
-      gpuModel: 'GPU',
-      os: 'Windows'
+      totalMemory: Number.isFinite(parseFloat(sysInfo.totalMemory)) ? parseFloat(sysInfo.totalMemory) : null,
+      gpuModel: sysInfo.gpuModel || 'Desconhecida',
+      os: sysInfo.os || 'Windows'
     };
     const history = db.getOptimizationHistory(10);
 
     try {
       aiRecommendations = await aiOptimizer.getSmartRecommendations(hwStats, hwProfile, history);
+      if (!aiRecommendations || typeof aiRecommendations !== 'object') throw new Error('Resposta de IA inválida');
+      aiRecommendations = {
+        ...aiRecommendations,
+        recommendations: Array.isArray(aiRecommendations.recommendations) ? aiRecommendations.recommendations : [],
+        available: true,
+        source: 'gemini'
+      };
       // Persistir recomendações
       if (aiRecommendations.recommendations) {
         aiRecommendations.recommendations.forEach(rec => {
@@ -492,15 +532,17 @@ ipcMain.handle('ai:full-analysis', async (event) => {
     } catch (e) {
       console.error('Gemini erro:', e.message);
       aiRecommendations = {
+        available: false,
+        source: 'unavailable',
         recommendations: [],
-        overallAssessment: 'Não foi possível conectar à API Gemini. Verifique sua chave de API.'
+        overallAssessment: 'Diagnóstico local concluído. Recomendações por IA indisponíveis; verifique a conexão e a configuração do Gemini.'
       };
     }
     send(4, {
       status: 'completed',
-      detail: aiRecommendations.recommendations
+      detail: aiRecommendations.available
         ? `${aiRecommendations.recommendations.length} recomendações geradas`
-        : 'Análise concluída',
+        : 'Diagnóstico local concluído; recomendações por IA indisponíveis',
       data: aiRecommendations
     });
 
@@ -510,8 +552,9 @@ ipcMain.handle('ai:full-analysis', async (event) => {
 
     const result = {
       success: true,
+      source: aiRecommendations.available ? 'local+gemini' : 'local',
       hardware: { stats: hwStats, info: sysInfo },
-      diagnostics: { issues: diagResult.issues, severity: diagResult.severity },
+      diagnostics: { success: true, source: 'local', issues: diagResult.issues, severity: diagResult.severity || 'unknown' },
       ml: mlPrediction,
       ai: aiRecommendations,
       timestamp: new Date().toISOString()
@@ -520,7 +563,7 @@ ipcMain.handle('ai:full-analysis', async (event) => {
     return result;
   } catch (err) {
     requestParams.logRequest('diagnostico', false);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -531,7 +574,7 @@ ipcMain.handle('ml:predict', async () => {
     const prediction = mlEngine.predict(stats);
     return { success: true, data: prediction };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -539,7 +582,7 @@ ipcMain.handle('ml:get-model-stats', async () => {
   try {
     return { success: true, data: mlEngine.getModelStats() };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -550,7 +593,7 @@ ipcMain.handle('ml:train-feedback', async (_, type, rating) => {
     mlEngine.train(stats, type, effectiveness);
     return { success: true };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -561,7 +604,7 @@ ipcMain.handle('localml:get-stats', async () => {
   try {
     return { success: true, data: localML.getFullStats() };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -571,7 +614,7 @@ ipcMain.handle('localml:predict', async (_, trends) => {
     const stats = await hwMonitor.getHardwareStats();
     return { success: true, data: localML.predictOptimization(stats, trends || {}) };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -582,7 +625,7 @@ ipcMain.handle('localml:tick', async () => {
     const insights = localML.tick(stats, stats.topCpuProcesses || []);
     return { success: true, data: insights };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -592,7 +635,7 @@ ipcMain.handle('localml:record-outcome', async (_, type, statsBefore, statsAfter
     localML.recordOutcome(type, statsBefore, statsAfter, userRating ?? null);
     return { success: true };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -606,7 +649,7 @@ ipcMain.handle('localml:train-session', async (_, label) => {
     localML.trainSession(cpu, mem, gpu, stats.topCpuProcesses || [], label);
     return { success: true };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -674,7 +717,7 @@ ipcMain.handle('apps:get-running-with-icons', async () => {
 
     return { success: true, data: results };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -683,91 +726,117 @@ ipcMain.handle('req:get-usage', async () => {
   try {
     return { success: true, data: requestParams.getUsageStats() };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
 // ===== Win Optimizer =====
-ipcMain.handle('winopt:visual-effects', async (_, enable) => {
+function winOptimizationResponse(data) {
+  return {
+    success: data.success !== false,
+    data,
+    ...(data.success === false ? { error: 'Uma ou mais etapas não puderam ser concluídas' } : {})
+  };
+}
+
+handleOptimization('winopt:visual-effects', 'winOptVisualEffects', async (_, enable) => {
   try {
     const res = enable === false ? await winOptimizer.revertVisualEffects() : await winOptimizer.optimizeVisualEffects();
-    return { success: true, data: res };
-  } catch (err) { return { success: false, error: String(err) }; }
+    return winOptimizationResponse(res);
+  } catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:disable-services', async () => {
-  try { return { success: true, data: await winOptimizer.disableBloatServices() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+handleOptimization('winopt:disable-services', 'winOptDisableServices', async () => {
+  try { return winOptimizationResponse(await winOptimizer.disableBloatServices()); }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:disable-telemetry', async () => {
-  try { return { success: true, data: await winOptimizer.disableTelemetry() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+handleOptimization('winopt:disable-telemetry', 'winOptDisableTelemetry', async () => {
+  try { return winOptimizationResponse(await winOptimizer.disableTelemetry()); }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:power-plan', async (_, revert) => {
+handleOptimization('winopt:power-plan', 'winOptPowerPlan', async (_, revert) => {
   try {
     const res = revert ? await winOptimizer.revertPowerPlan() : await winOptimizer.applyUltimatePerformance();
-    return { success: true, data: res };
-  } catch (err) { return { success: false, error: String(err) }; }
+    return winOptimizationResponse(res);
+  } catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:network', async () => {
-  try { return { success: true, data: await winOptimizer.optimizeNetwork() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+handleOptimization('winopt:network', 'winOptNetwork', async () => {
+  try { return winOptimizationResponse(await winOptimizer.optimizeNetwork()); }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:scheduler', async () => {
-  try { return { success: true, data: await winOptimizer.optimizeScheduler() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+handleOptimization('winopt:scheduler', 'winOptScheduler', async () => {
+  try { return winOptimizationResponse(await winOptimizer.optimizeScheduler()); }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:remove-policies', async () => {
-  try { return { success: true, data: await winOptimizer.removeJunkPolicies() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+handleOptimization('winopt:remove-policies', 'winOptRemovePolicies', async () => {
+  try { return winOptimizationResponse(await winOptimizer.removeJunkPolicies()); }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:optimize-gpu', async () => {
-  try { return { success: true, data: await winOptimizer.optimizeGPU() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+handleOptimization('winopt:optimize-gpu', 'winOptGPU', async () => {
+  try { return winOptimizationResponse(await winOptimizer.optimizeGPU()); }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:optimize-memory', async () => {
-  try { return { success: true, data: await winOptimizer.optimizeMemory() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+handleOptimization('winopt:optimize-memory', 'winOptMemory', async () => {
+  try { return winOptimizationResponse(await winOptimizer.optimizeMemory()); }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:kill-background', async () => {
+handleOptimization('winopt:kill-background', 'winOptKillBackground', async () => {
   try {
     const candidates = await winOptimizer.getRunningKillCandidates();
-    const res = await winOptimizer.killBackgroundProcesses(candidates.map(c => c.name));
-    return { success: true, data: { candidates, results: res } };
-  } catch (err) { return { success: false, error: String(err) }; }
+    const res = candidates.length
+      ? await winOptimizer.killBackgroundProcesses(candidates.map(c => c.exe))
+      : { applied: 'kill_background', success: true, results: [] };
+    return {
+      success: res.success !== false,
+      data: { candidates, results: res },
+      ...(res.success === false ? { error: 'Um ou mais aplicativos não puderam ser encerrados' } : {})
+    };
+  } catch (err) { return { success: false, error: String(err), code: err?.code }; }
+});
+
+handleOptimization('apps:kill-process', 'killProcess', async (_, processName) => {
+  try { return { success: true, data: await winOptimizer.killBackgroundProcess(processName) }; }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('winopt:get-kill-candidates', async () => {
   try { return { success: true, data: await winOptimizer.getRunningKillCandidates() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:boost-game', async (_, processName) => {
+handleOptimization('winopt:boost-game', 'winOptBoostGame', async (_, processName) => {
   try { return { success: true, data: await winOptimizer.boostGameProcess(processName) }; }
-  catch (err) { return { success: false, error: String(err) }; }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
-ipcMain.handle('winopt:full-optimization', async (_, options) => {
+handleOptimization('winopt:full-optimization', 'winOptFullBundle', async (_, options) => {
   const check = requestParams.canExecute('full_optimization');
   if (!check.allowed) return blockedResponse(check);
   try {
-    const res = await winOptimizer.runFullOptimization(options || {});
-    requestParams.logRequest('full_optimization', true);
-    await trainML('full_optimization', true);
-    const stats = await hwMonitor.getHardwareStats();
-    db.recordOptimization('full_optimization', 'bundle', stats.cpu?.current || 0, stats.memory?.current || 0, stats.gpu?.current || 0, true, JSON.stringify(res.completed));
-    return { success: true, data: res };
+    const statsBefore = await snapshotBefore();
+    const res = await winOptimizer.runFullOptimization(options || {}, progress => optimizationRunner.update(progress));
+    const success = res.success === true;
+    requestParams.logRequest('full_optimization', success);
+    await trainML('full_optimization', success, statsBefore);
+    const stats = hwMonitor.getCachedHardwareStats?.() || {};
+    db.recordOptimization('full_optimization', 'bundle', stats.cpu?.current ?? null, stats.memory?.current ?? null, stats.gpu?.current ?? null, success, JSON.stringify({ completed: res.completed || res.applied || [], errors: res.errors || [] }));
+    return {
+      success,
+      data: res,
+      code: res.code,
+      ...(success ? {} : { error: res.code ? res.errors?.at(-1)?.error || 'O ajuste foi interrompido.' : 'A otimização terminou com falhas. Confira as etapas que não foram concluídas.' })
+    };
   } catch (err) {
     requestParams.logRequest('full_optimization', false);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -792,7 +861,7 @@ ipcMain.handle('deepai:analyze', async (_, userContext) => {
     requestParams.logRequest('diagnostico', true);
     return { success: true, data: result, fingerprint };
   } catch (err) {
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), code: err?.code };
   }
 });
 
@@ -800,7 +869,7 @@ ipcMain.handle('deepai:refine', async (_, question) => {
   try {
     const result = await deepAI.refineAnalysis(question);
     return { success: true, data: result };
-  } catch (err) { return { success: false, error: String(err) }; }
+  } catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('deepai:bottleneck', async (_, type) => {
@@ -814,7 +883,7 @@ ipcMain.handle('deepai:bottleneck', async (_, type) => {
         : { usage: stats.gpu?.current || 0, model: 'GPU' };
     const result = await deepAI.analyzeBottleneck(type, metrics);
     return { success: true, data: result };
-  } catch (err) { return { success: false, error: String(err) }; }
+  } catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('deepai:analyze-processes', async () => {
@@ -823,7 +892,7 @@ ipcMain.handle('deepai:analyze-processes', async () => {
     const processes = (stats.topCpuProcesses || []).concat(stats.topMemoryProcesses || []);
     const result = await deepAI.analyzeProcessList(processes);
     return { success: true, data: result };
-  } catch (err) { return { success: false, error: String(err) }; }
+  } catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('deepai:record-pattern', async () => {
@@ -831,22 +900,22 @@ ipcMain.handle('deepai:record-pattern', async () => {
     const stats = await hwMonitor.getHardwareStats();
     deepAI.recordPattern(stats.cpu?.current || 0, stats.memory?.current || 0, stats.gpu?.current || 0);
     return { success: true };
-  } catch (err) { return { success: false, error: String(err) }; }
+  } catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('deepai:learn-outcome', async (_, optimizationId, before, after, rating) => {
   try {
     const lesson = await deepAI.learnFromOutcome(optimizationId, before, after, rating);
     return { success: true, data: lesson };
-  } catch (err) { return { success: false, error: String(err) }; }
+  } catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('deepai:session-summary', async () => {
   try { return { success: true, data: deepAI.getSessionSummary() }; }
-  catch (err) { return { success: false, error: String(err) }; }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });
 
 ipcMain.handle('deepai:clear-session', async () => {
   try { deepAI.clearSession(); return { success: true }; }
-  catch (err) { return { success: false, error: String(err) }; }
+  catch (err) { return { success: false, error: String(err), code: err?.code }; }
 });

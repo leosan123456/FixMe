@@ -1,6 +1,14 @@
 const { contextBridge, ipcRenderer } = require('electron');
+function subscribe(channel, callback) {
+  const listener = (_, data) => callback(data);
+  ipcRenderer.on(channel, listener);
+  return () => ipcRenderer.removeListener(channel, listener);
+}
 
 contextBridge.exposeInMainWorld('fixme', {
+  getOptimizationState: () => ipcRenderer.invoke('optim:get-state'),
+  onOptimizationProgress: (callback) => subscribe('optim:progress', callback),
+
   // Otimizações
   setHighPerformance: () => ipcRenderer.invoke('optim:set-high-performance'),
   getActivePowerPlan: () => ipcRenderer.invoke('optim:get-active-powerplan'),
@@ -26,14 +34,15 @@ contextBridge.exposeInMainWorld('fixme', {
   getRecentApps: () => ipcRenderer.invoke('apps:get-recent'),
   getGames: () => ipcRenderer.invoke('apps:get-games'),
   getRunningApps: () => ipcRenderer.invoke('apps:get-running-with-icons'),
+  killProcess: (processName) => ipcRenderer.invoke('apps:kill-process', processName),
 
   // Diagnostics
   runDiagnostics: () => ipcRenderer.invoke('diag:run-diagnostics'),
-  onDiagProgress: (callback) => ipcRenderer.on('diag:progress', (_, data) => callback(data)),
+  onDiagProgress: (callback) => subscribe('diag:progress', callback),
 
   // Full AI Analysis (Dashboard)
   runFullAnalysis: () => ipcRenderer.invoke('ai:full-analysis'),
-  onAnalysisProgress: (callback) => ipcRenderer.on('ai:analysis-progress', (_, data) => callback(data)),
+  onAnalysisProgress: (callback) => subscribe('ai:analysis-progress', callback),
 
   // ML Engine
   mlPredict: () => ipcRenderer.invoke('ml:predict'),
@@ -44,7 +53,7 @@ contextBridge.exposeInMainWorld('fixme', {
   getUsageStats: () => ipcRenderer.invoke('req:get-usage'),
 
   // Event listeners
-  onStatsUpdate: (callback) => ipcRenderer.on('hw:stats-update', (_, data) => callback(data)),
+  onStatsUpdate: (callback) => subscribe('hw:stats-update', callback),
 
   // Win Optimizer
   winOptVisualEffects: (enable) => ipcRenderer.invoke('winopt:visual-effects', enable),

@@ -6,7 +6,8 @@
  */
 
 const { exec } = require('child_process');
-const { execElevated } = require('./optimizations');
+const { execElevated, clearStandbyList, runElevatedPowerShellBatch, isFatalExecutionError } = require('./optimizations');
+const { normalizeProcessName, encodedPowerShell } = require('./process-command');
 
 // ─────────────────────────────────────────────
 // Internal helpers
@@ -14,8 +15,8 @@ const { execElevated } = require('./optimizations');
 
 function ps(command) {
   return new Promise((resolve, reject) => {
-    const full = `powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "${command.replace(/"/g, '\\"')}"`;
-    exec(full, { timeout: 30000 }, (err, stdout, stderr) => {
+    const full = encodedPowerShell(command);
+    exec(full, { timeout: 10000, windowsHide: true }, (err, stdout, stderr) => {
       if (err) return reject(new Error(stderr || err.message));
       resolve(stdout.trim());
     });
@@ -23,12 +24,16 @@ function ps(command) {
 }
 
 function psElevated(command) {
-  const escaped = command.replace(/"/g, '\\"');
-  return execElevated(`powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "${escaped}"`);
+  return execElevated(encodedPowerShell(`$ErrorActionPreference = 'Stop';\n${command}`));
 }
 
 function reg(args) {
   return execElevated(`reg ${args}`);
+}
+
+async function runElevatedCommands(commands) {
+  const results = await runElevatedPowerShellBatch(commands, { continueOnError: true });
+  return results.filter(result => !result.success).map(result => ({ step: result.step, error: result.error, code: result.code }));
 }
 
 // ─────────────────────────────────────────────
@@ -84,20 +89,22 @@ const SAFE_TO_STOP_SERVICES = [
 ];
 
 async function disableBloatServices() {
-  const results = [];
-  for (const svc of BLOAT_SERVICES) {
-    try {
-      await psElevated(
-        `$s = Get-Service -Name '${svc}' -ErrorAction SilentlyContinue; ` +
-        `if ($s) { Set-Service -Name '${svc}' -StartupType Disabled -ErrorAction SilentlyContinue; ` +
-        `Stop-Service -Name '${svc}' -Force -ErrorAction SilentlyContinue }`
-      );
-      results.push({ service: svc, status: 'disabled' });
-    } catch (_) {
-      results.push({ service: svc, status: 'skipped' });
-    }
-  }
-  return { applied: 'bloat_services', results };
+  // Keep Windows Search and SysMain intact. One elevation handles this group.
+  const commands = SAFE_TO_STOP_SERVICES.map(svc =>
+    `$s = $null; try { $s = Get-Service -Name '${svc}' -ErrorAction Stop } ` +
+    `catch { if ($_.FullyQualifiedErrorId -notlike 'NoServiceFoundForGivenName*') { throw } }; ` +
+    `if ($null -eq $s) { Write-Output 'not_installed' } else { ` +
+    `Set-Service -Name '${svc}' -StartupType Disabled -ErrorAction Stop; ` +
+    `if ($s.Status -ne 'Stopped') { Stop-Service -Name '${svc}' -Force -ErrorAction Stop }; Write-Output 'disabled' }`
+  );
+  const batch = await runElevatedPowerShellBatch(commands, { continueOnError: true });
+  const results = batch.map((result, index) => {
+    const status = String(result.stdout || '').trim().split(/\r?\n/).at(-1);
+    return result.success && ['disabled', 'not_installed'].includes(status)
+      ? { service: SAFE_TO_STOP_SERVICES[index], status }
+      : { service: SAFE_TO_STOP_SERVICES[index], status: 'failed', error: result.error || 'Não foi possível confirmar o estado do serviço' };
+  });
+  return { applied: 'bloat_services', success: results.every(result => result.status !== 'failed'), results };
 }
 
 async function disableTelemetry() {
@@ -118,10 +125,8 @@ async function disableTelemetry() {
     `Disable-ScheduledTask -TaskName "ProgramDataUpdater" -TaskPath "\\Microsoft\\Windows\\Application Experience\\" -ErrorAction SilentlyContinue`,
     `Disable-ScheduledTask -TaskName "Consolidator" -TaskPath "\\Microsoft\\Windows\\Customer Experience Improvement Program\\" -ErrorAction SilentlyContinue`,
   ];
-  for (const cmd of cmds) {
-    try { await psElevated(cmd); } catch (_) {}
-  }
-  return { applied: 'telemetry', detail: 'Telemetry, CEIP and activity history disabled' };
+  const errors = await runElevatedCommands(cmds);
+  return { applied: 'telemetry', success: errors.length === 0, errors, detail: 'Telemetry, CEIP and activity history disabled' };
 }
 
 // ─────────────────────────────────────────────
@@ -136,17 +141,11 @@ async function applyUltimatePerformance() {
   try {
     await execElevated(`powercfg -setactive ${ultimateGuid}`);
     return { applied: 'power_ultimate', guid: ultimateGuid };
-  } catch (_) {
-    // Not present — duplicate High Performance and maximise all settings
-    await execElevated(
-      `powercfg -duplicatescheme ${highGuid} && ` +
-      `powercfg -setactive ${highGuid} && ` +
-      `powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMIN 100 && ` +
-      `powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 && ` +
-      `powercfg /setacvalueindex SCHEME_CURRENT 238c9fa8-0aad-41ed-83f4-97be242c8f20 29f6c1db-86da-48c5-9fdb-f2b67b1f44da 0 && ` +
-      `powercfg -S SCHEME_CURRENT`
-    );
-    return { applied: 'power_high_tuned', guid: highGuid };
+  } catch (error) {
+    if (isFatalExecutionError(error)) throw error;
+    // Try the existing High Performance plan without forcing idle CPU clocks.
+    await execElevated(`powercfg -setactive ${highGuid}`);
+    return { applied: 'power_high', guid: highGuid };
   }
 }
 
@@ -176,12 +175,8 @@ async function optimizeNetwork() {
     `Get-NetAdapter | Set-NetAdapterPowerManagement -WakeOnMagicPacket Disabled -ErrorAction SilentlyContinue`,
   ];
 
-  const results = [];
-  for (const cmd of cmds) {
-    try { await psElevated(cmd); results.push('ok'); }
-    catch (e) { results.push('skipped: ' + e.message.slice(0, 60)); }
-  }
-  return { applied: 'network', results };
+  const errors = await runElevatedCommands(cmds);
+  return { applied: 'network', success: errors.length === 0, errors };
 }
 
 // ─────────────────────────────────────────────
@@ -202,10 +197,8 @@ async function optimizeScheduler() {
     `bcdedit /set useplatformclock false`,
     `bcdedit /set disabledynamictick yes`,
   ];
-  for (const cmd of cmds) {
-    try { await psElevated(cmd); } catch (_) {}
-  }
-  return { applied: 'scheduler', detail: 'MMCSS game profile and timer resolution optimised' };
+  const errors = await runElevatedCommands(cmds);
+  return { applied: 'scheduler', success: errors.length === 0, errors, detail: 'MMCSS game profile and timer resolution optimised' };
 }
 
 // ─────────────────────────────────────────────
@@ -235,10 +228,8 @@ async function removeJunkPolicies() {
     `Set-ItemProperty -Path "HKCU:\\Control Panel\\Desktop" -Name "WaitToKillAppTimeout" -Value "2000" -Force`,
     `Set-ItemProperty -Path "HKCU:\\Control Panel\\Desktop" -Name "HungAppTimeout" -Value "1000" -Force`,
   ];
-  for (const cmd of removals) {
-    try { await psElevated(cmd); } catch (_) {}
-  }
-  return { applied: 'registry_policies', detail: 'Startup delay, prefetch, maintenance and tips policies removed' };
+  const errors = await runElevatedCommands(removals);
+  return { applied: 'registry_policies', success: errors.length === 0, errors, detail: 'Startup delay, prefetch, maintenance and tips policies removed' };
 }
 
 // ─────────────────────────────────────────────
@@ -263,39 +254,55 @@ const BACKGROUND_KILL_LIST = [
 ];
 
 async function killBackgroundProcesses(targets) {
-  // targets = array of exe names; if empty, use BACKGROUND_KILL_LIST filtered to running
-  const toKill = targets && targets.length > 0
+  // An empty batch means the currently running optional apps, never arbitrary
+  // process names supplied by the renderer.
+  const toKill = Array.isArray(targets) && targets.length > 0
     ? targets
-    : BACKGROUND_KILL_LIST.map(p => p.exe);
+    : (await getRunningKillCandidates()).map(p => p.exe);
 
   const results = [];
   for (const exe of toKill) {
-    const safeName = exe.replace(/[^a-zA-Z0-9._-]/g, '');
     try {
-      await psElevated(
-        `Stop-Process -Name "${safeName.replace('.exe', '')}" -Force -ErrorAction SilentlyContinue`
-      );
-      results.push({ exe: safeName, status: 'killed' });
-    } catch (_) {
-      results.push({ exe: safeName, status: 'not_running' });
+      const result = await killBackgroundProcess(exe);
+      results.push({ exe: result.exe, status: 'killed' });
+    } catch (err) {
+      if (isFatalExecutionError(err)) throw err;
+      results.push({ exe, status: 'failed', error: err.message });
     }
   }
-  return { applied: 'kill_background', results };
+  return { applied: 'kill_background', success: results.every(r => r.status === 'killed'), results };
+}
+
+async function killBackgroundProcess(processName) {
+  const name = normalizeProcessName(processName);
+  const candidate = BACKGROUND_KILL_LIST.find(p => p.exe.toLowerCase() === `${name}.exe`.toLowerCase());
+  if (!candidate) throw new Error('Este processo não está na lista de aplicativos opcionais que podem ser encerrados');
+  // -ErrorAction Stop makes a missing process or a denied operation a failure,
+  // rather than reporting a successful termination without changing anything.
+  await psElevated(`$processes = @(Get-Process -Name '${name}' -ErrorAction Stop); ` +
+    `$processes | Stop-Process -Force -ErrorAction Stop`);
+  return { applied: 'kill_process', exe: candidate.exe, status: 'killed' };
 }
 
 async function getRunningKillCandidates() {
   const names = BACKGROUND_KILL_LIST.map(p => p.exe.replace('.exe', '')).join("','");
   try {
-    const out = await ps(`Get-Process -Name @('${names}') -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name | Sort-Object -Unique | ConvertTo-Json -Compress`);
-    if (!out) return [];
+    // Enumerating once avoids missing-name errors while preserving actual query
+    // failures. ConvertTo-Json -InputObject emits [] for a successful empty scan.
+    const out = await ps(`$ErrorActionPreference = 'Stop'; $names = @('${names}'); ` +
+      `$running = @(Get-Process -ErrorAction Stop | Where-Object { $_.ProcessName -in $names } | ` +
+      `Select-Object -ExpandProperty ProcessName | Sort-Object -Unique); ` +
+      `ConvertTo-Json -InputObject $running -Compress`);
     const running = JSON.parse(out);
     const arr = Array.isArray(running) ? running : [running];
     return arr.map(n => {
+      if (typeof n !== 'string') throw new Error('Resposta inválida ao consultar processos');
       const entry = BACKGROUND_KILL_LIST.find(p => p.exe.replace('.exe', '').toLowerCase() === n.toLowerCase());
-      return { name: entry ? entry.name : n, exe: n + '.exe', reason: entry ? entry.reason : 'Background process' };
+      if (!entry) throw new Error('Resposta inválida ao consultar processos');
+      return { name: entry.name, exe: entry.exe, reason: entry.reason };
     });
-  } catch (_) {
-    return [];
+  } catch (err) {
+    throw new Error(`Não foi possível consultar os aplicativos em execução: ${err.message}`);
   }
 }
 
@@ -322,10 +329,8 @@ async function optimizeGPU() {
     `Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\GameBar" -Name "AllowAutoGameMode" -Value 1 -Force`,
     `Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\GameBar" -Name "AutoGameModeEnabled" -Value 1 -Force`,
   ];
-  for (const cmd of cmds) {
-    try { await psElevated(cmd); } catch (_) {}
-  }
-  return { applied: 'gpu', detail: 'HAGS, Game Mode, GameDVR and power throttling configured' };
+  const errors = await runElevatedCommands(cmds);
+  return { applied: 'gpu', success: errors.length === 0, errors, detail: 'HAGS, Game Mode, GameDVR and power throttling configured' };
 }
 
 // ─────────────────────────────────────────────
@@ -333,34 +338,9 @@ async function optimizeGPU() {
 // ─────────────────────────────────────────────
 
 async function optimizeMemory() {
-  const cmds = [
-    // Clear standby list (RAM not freed by apps)
-    `$code = @"
-using System;
-using System.Runtime.InteropServices;
-public class MemClear {
-  [DllImport("ntdll.dll")] public static extern int NtSetSystemInformation(int InfoClass, IntPtr Info, int Length);
-  public static void ClearStandby() {
-    var info = 4; // MemoryPurgeStandbyList
-    var gch = GCHandle.Alloc(info, GCHandleType.Pinned);
-    NtSetSystemInformation(80, gch.AddrOfPinnedObject(), sizeof(int));
-    gch.Free();
-  }
-}
-"@
-Add-Type -TypeDefinition $code -ErrorAction SilentlyContinue
-try { [MemClear]::ClearStandby() } catch {}`,
-    // Adjust working set of all non-critical processes
-    `Get-Process | Where-Object { $_.Name -notmatch "^(System|Idle|csrss|winlogon|smss|lsass|svchost|services|wininit)$" } | ForEach-Object { try { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($_) | Out-Null } catch {}; try { $_.MinWorkingSet = $_.MinWorkingSet } catch {} }`,
-    // Disable memory compression (reduces CPU overhead on low RAM systems)
-    `Disable-MMAgent -MemoryCompression -ErrorAction SilentlyContinue`,
-    // Heap decommit threshold
-    `Set-ItemProperty -Path "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management" -Name "HeapDeCommitFreeBlockThreshold" -Value 0x00040000 -Force`,
-  ];
-  for (const cmd of cmds) {
-    try { await psElevated(cmd); } catch (_) {}
-  }
-  return { applied: 'memory', detail: 'Standby list cleared, working sets trimmed, heap optimised' };
+  // Never trim every process or disable Windows memory compression.
+  const result = await clearStandbyList();
+  return { applied: 'memory', success: true, detail: 'Somente a lista de memória em espera foi limpa', result };
 }
 
 // ─────────────────────────────────────────────
@@ -368,11 +348,10 @@ try { [MemClear]::ClearStandby() } catch {}`,
 // ─────────────────────────────────────────────
 
 async function boostGameProcess(processName) {
-  if (!processName || typeof processName !== 'string') throw new Error('Process name required');
-  const safe = processName.replace(/[^a-zA-Z0-9._-]/g, '').replace(/\.exe$/i, '');
+  const safe = normalizeProcessName(processName);
 
   const cmd = `
-    $proc = Get-Process -Name "${safe}" -ErrorAction SilentlyContinue
+    $proc = Get-Process -Name '${safe}' -ErrorAction Stop
     if ($proc) {
       $proc | ForEach-Object {
         $_.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::High
@@ -394,50 +373,40 @@ async function boostGameProcess(processName) {
 // 11. FULL OPTIMIZATION BUNDLE
 // ─────────────────────────────────────────────
 
-async function runFullOptimization(options = {}) {
+async function runFullOptimization(options = {}, onProgress = () => {}) {
   const {
-    visualEffects  = true,
-    services       = true,
-    telemetry      = true,
-    power          = true,
-    network        = true,
-    scheduler      = true,
-    policies       = true,
-    gpu            = true,
-    memory         = true,
-    killProcesses  = false,   // opt-in only — more disruptive
+    visualEffects = true, power = true,
+    services = false, telemetry = false, network = false, scheduler = false,
+    policies = false, gpu = false, memory = false, killProcesses = false
   } = options;
-
-  const results = [];
-  const errors  = [];
-
-  async function run(name, fn) {
+  const steps = [
+    [visualEffects, 'visual_effects', optimizeVisualEffects],
+    [power, 'power', applyUltimatePerformance],
+    [services, 'services', disableBloatServices],
+    [telemetry, 'telemetry', disableTelemetry],
+    [network, 'network', optimizeNetwork],
+    [scheduler, 'scheduler', optimizeScheduler],
+    [policies, 'policies', removeJunkPolicies],
+    [gpu, 'gpu', optimizeGPU],
+    [memory, 'memory', optimizeMemory],
+    [killProcesses, 'kill_bg', () => killBackgroundProcesses([])]
+  ].filter(([enabled]) => enabled === true);
+  const results = [], errors = [];
+  let fatalCode;
+  for (const [index, [, name, execute]] of steps.entries()) {
+    onProgress({ phase: 'executing', step: index, total: steps.length, label: name });
     try {
-      const r = await fn();
-      results.push(r);
-    } catch (e) {
-      errors.push({ step: name, error: e.message });
+      const result = await execute();
+      results.push(result);
+      if (result.success === false) errors.push({ step: name, error: 'Uma ou mais etapas não puderam ser concluídas' });
+    } catch (error) {
+      errors.push({ step: name, error: error.message, code: error.code });
+      if (isFatalExecutionError(error)) { fatalCode = error.code; break; }
     }
+    onProgress({ phase: 'executing', step: index + 1, total: steps.length, label: name });
   }
-
-  if (visualEffects) await run('visual_effects',  optimizeVisualEffects);
-  if (services)      await run('services',         disableBloatServices);
-  if (telemetry)     await run('telemetry',        disableTelemetry);
-  if (power)         await run('power',            applyUltimatePerformance);
-  if (network)       await run('network',          optimizeNetwork);
-  if (scheduler)     await run('scheduler',        optimizeScheduler);
-  if (policies)      await run('policies',         removeJunkPolicies);
-  if (gpu)           await run('gpu',              optimizeGPU);
-  if (memory)        await run('memory',           optimizeMemory);
-  if (killProcesses) await run('kill_bg',          () => killBackgroundProcesses([]));
-
-  return {
-    success: errors.length === 0,
-    applied: results.map(r => r.applied),
-    results,
-    errors,
-    timestamp: new Date().toISOString()
-  };
+  const completed = results.filter(result => result.success !== false).map(result => result.applied);
+  return { success: errors.length === 0, code: fatalCode, applied: completed, completed, results, errors, timestamp: new Date().toISOString() };
 }
 
 // ─────────────────────────────────────────────
@@ -471,6 +440,7 @@ module.exports = {
   optimizeGPU,
   optimizeMemory,
   killBackgroundProcesses,
+  killBackgroundProcess,
   getRunningKillCandidates,
   boostGameProcess,
 

@@ -6,8 +6,12 @@
   "scripts": {
     "start": "node launch.js",
     "dev": "node launch.js",
+    "preview": "node preview.js",
     "test": "node test-runner.js",
-    "test:unit": "node test-modules.js",
+    "test:unit": "node test-modules.js && node --test test-backend.js test-dashboard.js test-execution.js test-optimization-runner.js test-telemetry-cache.js",
+    "test:backend": "node --test test-backend.js",
+    "test:dashboard": "node --test test-dashboard.js",
+    "test:windows": "node --test test-execution-windows.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "release": "electron-builder --publish always"
@@ -42,6 +46,8 @@
       "preload.js",
       "launch.js",
       "dashboard.html",
+      "dashboard.css",
+      "dashboard.js",
       "src/**/*",
       "node_modules/**/*",
       "!node_modules/.cache/**/*",
@@ -85,10 +91,6 @@
       "uninstallerIcon": "build/icon.ico"
     },
     "extraResources": [
-      {
-        "from": ".env",
-        "to": ".env"
-      },
       {
         "from": ".env.example",
         "to": ".env.example"

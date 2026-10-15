@@ -139,13 +139,18 @@ class NativeTelemetry {
     const itemCount = [0];
     let status = funcs.PdhGetFormattedCounterArrayW(this._gpuCounter, PDH_FMT_DOUBLE, bufSize, itemCount, null);
     if (u32(status) !== PDH_MORE_DATA && u32(status) !== 0) throw new Error('array probe 0x' + u32(status).toString(16));
-    if (bufSize[0] === 0) return 0;
+    if (bufSize[0] === 0) return null;
 
     const buffer = Buffer.alloc(bufSize[0]);
     status = funcs.PdhGetFormattedCounterArrayW(this._gpuCounter, PDH_FMT_DOUBLE, bufSize, itemCount, buffer);
     if (u32(status) !== 0) throw new Error('array fetch 0x' + u32(status).toString(16));
 
     const items = koffi.decode(buffer, koffi.array(types.PDH_FMT_COUNTERVALUE_ITEM_W, itemCount[0]));
+    // No initialized 3D counter is an unavailable sample, not measured idle.
+    const hasValidSample = (items || []).some(item => item && item.FmtValue &&
+      item.FmtValue.CStatus === 0 && Number.isFinite(item.FmtValue.doubleValue) &&
+      String(item.szName || '').toLowerCase().endsWith('engtype_3d'));
+    if (!hasValidSample) return null;
     const sum = _sumEngineType(items, '3D');
     return sum === null ? null : Math.max(0, Math.min(100, sum));
   }

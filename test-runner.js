@@ -34,11 +34,19 @@ function runTest(label, command, args, opts) {
   // 2. Module unit tests
   await runTest('test-modules.js (Unit tests)', process.execPath, ['test-modules.js'], { cwd: __dirname });
 
+  await runTest('Backend and dashboard regressions', process.execPath, ['--test', 'test-backend.js', 'test-dashboard.js', 'test-execution.js', 'test-optimization-runner.js', 'test-telemetry-cache.js'], { cwd: __dirname });
+
   // 3. Electron window test (requires display)
   await runTest('minimal-test.js (Electron window)', electronPath, ['minimal-test.js'], {
     cwd: __dirname,
     env,
     timeout: 15000
+  });
+
+  await runTest('test-app-smoke.js (Real app and preload)', electronPath, ['test-app-smoke.js'], {
+    cwd: __dirname,
+    env,
+    timeout: 30000
   });
 
   console.log(`\n${'='.repeat(50)}`);
